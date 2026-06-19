@@ -1,0 +1,463 @@
+import i18n from "i18next";
+import { initReactI18next } from "react-i18next";
+
+const savedLang = localStorage.getItem("lang") || "en";
+
+i18n.use(initReactI18next).init({
+  resources: {
+    en: {
+      translation: {
+        dashboard: "Dashboard",
+        users: "Users",
+        orders: "Orders",
+        search: "Search",
+        add: "Add",
+        logout: "Logout",
+        offeratdashboard:"Offerat Dashboard",
+        DeliveryDashboard: "Delivery Dashboard",
+        manageordersdriversreportsinonecleansystem:
+          "Manage orders drivers reports in one clean system",
+        welcomeBack: "Welcome Back",
+        signIn: "Sign in to continue",
+        username: "Username",
+        password: "Password",
+        login: "Login",
+        loginFailed: "Login Failed",
+        welcome: "Welcome",
+driversDashboard: "Drivers Dashboard",
+addDriver: "Add Driver",
+
+totalDrivers: "Total Drivers",
+activeDrivers: "Active Drivers",
+totalEarnings: "Total Earnings",
+remaining: "Remaining",
+
+searchDriver: "Search Driver...",
+
+name: "Name",
+phone: "Phone",
+vehicle: "Vehicle",
+earnings: "Earnings",
+paid: "Paid",
+status: "Status",
+actions: "Actions",
+
+active: "Active",
+inactive: "Inactive",
+
+statement: "Statement",
+delete: "Delete",
+
+cancel: "Cancel",
+save: "Save",
+
+fullName: "Full Name",
+vehicleType: "Vehicle Type",
+
+errorAddingDriver: "Error adding driver",
+administrator: "Administrator",
+accountant: "Accountant",
+employee: "Employee",
+excelImportCenter: "Excel Import Center",
+uploadExcelDescription:
+  "Upload delivery Excel files and automatically generate orders, restaurants and drivers.",
+
+uploadExcelFile: "Upload Excel File",
+supportedFormats: "Supported formats: .xlsx / .xls",
+chooseFile: "Choose File",
+importOrders: "Import Orders",
+
+imported: "Imported",
+skipped: "Skipped",
+totalRows: "Total Rows",
+restaurants: "Restaurants",
+drivers: "Drivers",
+
+importHistory: "Import History",
+
+fileName: "File Name",
+date: "Date",
+
+noImportsYet: "No imports yet",
+
+delete: "Delete",
+deleteImportConfirm:
+  "Delete this import and all related data?",
+
+importFailed: "Import Failed",
+deleteFailed: "Delete Failed",
+refresh: "Refresh",
+
+revenue: "Revenue",
+companyProfit: "Company Profit",
+expenses: "Expenses",
+driverPayments: "Driver Payments",
+netProfit: "Net Profit",
+drivers: "Drivers",
+restaurants: "Restaurants",
+deliveryERP: "Delivery ERP",
+financialDashboard: "Financial & Operations Dashboard",
+
+profit: "Profit",
+
+importExcel: "Import Excel",
+statements: "Statements",
+revenueAnalytics: "Revenue & Profit Analytics",
+// USERS PAGE
+usersManagement: "Users Management",
+manageSystemUsers: "Manage system users and permissions",
+addUser: "Add User",
+fullName: "Full Name",
+role: "Role",
+actions: "Actions",
+save: "Save",
+cancel: "Cancel",
+deleteUser: "Delete User",
+deleteThisUser: "Delete this user?",
+failed: "Failed",
+driverStatement: "Driver Statement",
+totalEarnings: "Total Earnings",
+paidAmount: "Paid Amount",
+remaining: "Remaining",
+lastPayment: "Last Payment",
+
+addPayment: "Add Payment",
+exportPdf: "Export PDF",
+
+amount: "Amount",
+note: "Note",
+date: "Date",
+
+noDataFound: "No Data Found",
+noPayments: "No Payments",
+
+invalidAmount: "Invalid amount",
+maxAllowed: "Max allowed",
+paymentAdded: "Payment added successfully",
+errorLoadData: "Failed to load data",
+errorAddPayment: "Error adding payment",
+id: "ID",
+fullNameColumn: "Full Name",
+usernameColumn: "Username",
+roleColumn: "Role",
+actionsColumn: "Actions",
+restaurantsTitle: "Restaurants",
+addRestaurant: "Add Restaurant",
+statementsTitle: "Statements",
+
+fileName: "File Name",
+total: "Total",
+imported: "Imported",
+skipped: "Skipped",
+restaurants: "Restaurants",
+drivers: "Drivers",
+date: "Date",
+action: "Action",
+
+view: "View",
+loading: "Loading...",
+name: "Name",
+phone: "Phone",
+address: "Address",
+commission: "Commission",
+status: "Status",
+actions: "Actions",
+
+active: "Active",
+inactive: "Inactive",
+
+editRestaurant: "Edit Restaurant",
+addRestaurantDialog: "Add Restaurant",
+
+deleteConfirm: "Delete restaurant?",
+errorSaveRestaurant: "Error saving restaurant",
+loading: "Loading...",
+orderNumber: "Order Number",
+cancel: "Cancel",
+save: "Save",
+statementOrders: "Statement Orders",
+total: "Total",
+
+searchPlaceholder: "Search by customer, phone, restaurant...",
+searchButton: "Search",
+
+orderNumber: "Order Number",
+startTime: "Start Time",
+endTime: "End Time",
+restaurant: "Restaurant",
+branch: "Branch",
+captain: "Captain",
+captainPhone: "Captain Phone",
+customerName: "Customer Name",
+customerPhone: "Customer Phone",
+customerAddress: "Customer Address",
+customerArea: "Customer Area",
+
+orderAmount: "Order Amount",
+deliveryFee: "Delivery Fee",
+vehicleType: "Vehicle Type",
+distance: "Distance",
+
+invoiceNumber: "Invoice Number",
+commission: "Commission",
+commissionDescription: "Commission Description",
+
+cancelReason: "Cancel Reason",
+tariff: "Tariff",
+employeeNote: "Employee Note",
+accountantNote: "Accountant Note",
+
+auditLog: "Audit Log",
+viewAuditLog: "View Log",
+
+auditLogs: "Audit Logs",
+noAuditLogsFound: "No Audit Logs Found",
+
+field: "Field",
+oldValue: "Old Value",
+newValue: "New Value",
+
+pending: "Pending",
+preparing: "Preparing",
+onTheWay: "On The Way",
+delivered: "Delivered",
+cancelled: "Cancelled",
+      },
+    },
+    ar: {
+      translation: {
+
+tariff: "التعرفة",
+statementOrders: "طلبات الكشف",
+total: "الإجمالي",
+
+searchPlaceholder: "ابحث باسم الزبون أو الهاتف أو المطعم...",
+searchButton: "بحث",
+
+orderNumber: "رقم الطلب",
+startTime: "وقت البداية",
+endTime: "وقت النهاية",
+restaurant: "المطعم",
+branch: "الفرع",
+captain: "الكابتن",
+captainPhone: "رقم الكابتن",
+
+customerName: "اسم الزبون",
+customerPhone: "هاتف الزبون",
+customerAddress: "عنوان الزبون",
+customerArea: "منطقة الزبون",
+
+orderAmount: "قيمة الطلب",
+deliveryFee: "سعر التوصيل",
+vehicleType: "المركبة",
+distance: "المسافة",
+
+invoiceNumber: "رقم الفاتورة",
+commission: "العمولة",
+commissionDescription: "وصف العمولة",
+
+cancelReason: "سبب الإلغاء",
+
+employeeNote: "ملاحظة الموظف",
+accountantNote: "ملاحظة المحاسب",
+
+auditLog: "السجل",
+viewAuditLog: "عرض السجل",
+
+auditLogs: "سجل التعديلات",
+noAuditLogsFound: "لا يوجد سجل تعديلات",
+
+field: "الحقل",
+oldValue: "القيمة القديمة",
+newValue: "القيمة الجديدة",
+
+pending: "قيد الانتظار",
+preparing: "قيد التحضير",
+onTheWay: "في الطريق",
+delivered: "تم التوصيل",
+cancelled: "ملغي",
+statementOrders: "طلبات الكشف",
+fileName: "اسم الملف",
+total: "الإجمالي",
+imported: "تم الاستيراد",
+skipped: "تم التجاهل",
+restaurants: "المطاعم",
+drivers: "السائقين",
+date: "التاريخ",
+action: "الإجراء",
+
+view: "عرض",
+loading: "جاري التحميل...",
+        driverStatement: "كشف السائق",
+totalEarnings: "إجمالي الأرباح",
+paidAmount: "المبلغ المدفوع",
+remaining: "المتبقي",
+lastPayment: "آخر دفعة",
+
+addPayment: "إضافة دفعة",
+exportPdf: "تصدير PDF",
+
+amount: "المبلغ",
+note: "ملاحظة",
+date: "التاريخ",
+restaurantsTitle: "المطاعم",
+addRestaurant: "إضافة مطعم",
+
+name: "الاسم",
+phone: "الهاتف",
+address: "العنوان",
+commission: "نسبة العمولة",
+status: "الحالة",
+actions: "الإجراءات",
+
+active: "نشط",
+inactive: "غير نشط",
+
+editRestaurant: "تعديل مطعم",
+addRestaurantDialog: "إضافة مطعم",
+
+deleteConfirm: "هل تريد حذف المطعم؟",
+errorSaveRestaurant: "فشل حفظ المطعم",
+loading: "جاري التحميل...",
+
+cancel: "إلغاء",
+save: "حفظ",
+noDataFound: "لا توجد بيانات",
+noPayments: "لا توجد دفعات",
+
+invalidAmount: "مبلغ غير صالح",
+maxAllowed: "الحد الأقصى المسموح",
+paymentAdded: "تم إضافة الدفعة بنجاح",
+errorLoadData: "فشل تحميل البيانات",
+errorAddPayment: "فشل إضافة الدفعة",
+excelImportCenter: "مركز استيراد الإكسل",
+uploadExcelDescription:
+  "ارفع ملفات الإكسل الخاصة بالتوصيل وسيتم إنشاء الطلبات والمطاعم والسائقين تلقائياً.",
+
+uploadExcelFile: "رفع ملف إكسل",
+supportedFormats: "الصيغ المدعومة: xls / xlsx",
+chooseFile: "اختيار ملف",
+importOrders: "استيراد الطلبات",
+
+imported: "تم الاستيراد",
+skipped: "تم التجاهل",
+totalRows: "إجمالي الصفوف",
+restaurants: "المطاعم",
+drivers: "السائقين",
+
+importHistory: "سجل الاستيراد",
+
+fileName: "اسم الملف",
+date: "التاريخ",
+
+noImportsYet: "لا يوجد عمليات استيراد",
+
+delete: "حذف",
+deleteImportConfirm:
+  "هل تريد حذف عملية الاستيراد وكل البيانات المرتبطة بها؟",
+
+importFailed: "فشل الاستيراد",
+deleteFailed: "فشل الحذف",
+usersManagement: "إدارة المستخدمين",
+manageSystemUsers: "إدارة مستخدمي النظام والصلاحيات",
+addUser: "إضافة مستخدم",
+fullName: "الاسم الكامل",
+role: "الدور",
+actions: "الإجراءات",
+save: "حفظ",
+cancel: "إلغاء",
+deleteUser: "حذف المستخدم",
+deleteThisUser: "هل تريد حذف هذا المستخدم؟",
+failed: "فشل",
+
+id: "الرقم",
+fullNameColumn: "الاسم الكامل",
+usernameColumn: "اسم المستخدم",
+roleColumn: "الدور",
+actionsColumn: "الإجراءات",
+        driversDashboard: "لوحة السائقين",
+addDriver: "إضافة سائق",
+
+totalDrivers: "إجمالي السائقين",
+activeDrivers: "السائقون النشطون",
+totalEarnings: "إجمالي الأرباح",
+remaining: "المتبقي",
+
+searchDriver: "ابحث عن سائق...",
+
+name: "الاسم",
+phone: "الهاتف",
+vehicle: "المركبة",
+earnings: "الأرباح",
+paid: "المدفوع",
+status: "الحالة",
+actions: "الإجراءات",
+
+active: "نشط",
+inactive: "غير نشط",
+
+statement: "كشف حساب",
+delete: "حذف",
+
+cancel: "إلغاء",
+save: "حفظ",
+
+fullName: "الاسم الكامل",
+vehicleType: "نوع المركبة",
+
+errorAddingDriver: "فشل إضافة السائق",
+        dashboard: "لوحة التحكم",
+        users: "المستخدمين",
+        orders: "الطلبات",
+        search: "بحث",
+        add: "إضافة",
+        logout: "تسجيل خروج",
+        offeratdashboard:"لوحه تحكم اوفرات",
+        DeliveryDashboard: "لوحة تحكم التسليم",
+        manageordersdriversreportsinonecleansystem:
+          "إدارة الطلبات والسائقين والتقارير في نظام واحد منظم",
+        welcomeBack: "أهلاً بعودتك",
+        signIn: "سجّل دخولك للمتابعة",
+        username: "اسم المستخدم",
+        password: "كلمة المرور",
+        login: "تسجيل الدخول",
+        loginFailed: "فشل تسجيل الدخول",
+        welcome: "مرحباً",
+deliveryERP: "نظام إدارة التوصيل",
+financialDashboard: "لوحة العمليات والإدارة المالية",
+
+profit: "الربح",
+
+importExcel: "استيراد إكسل",
+statements: "الكشوفات",
+administrator: "مدير النظام",
+accountant: "محاسب",
+employee: "موظف",
+
+refresh: "تحديث",
+
+revenue: "الإيرادات",
+companyProfit: "ربح الشركة",
+expenses: "المصاريف",
+driverPayments: "مستحقات السائقين",
+netProfit: "صافي الربح",
+drivers: "السائقين",
+restaurants: "المطاعم",
+
+revenueAnalytics: "تحليل الإيرادات والأرباح",
+      },
+    },
+  },
+
+  lng: savedLang,   // 🔥 أهم سطر
+  fallbackLng: "en",
+  interpolation: {
+    escapeValue: false,
+  },
+
+  react: {
+    useSuspense: false,
+  },
+});
+
+export default i18n;
