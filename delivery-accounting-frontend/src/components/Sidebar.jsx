@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+import { NavLink, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useState, useEffect } from "react";
 import i18n from "i18next";
@@ -19,6 +19,7 @@ import "./Sidebar.css";
 
 function Sidebar() {
   const { t } = useTranslation();
+  const location = useLocation(); // ✅ لازم تضيفها
 
   const user = JSON.parse(localStorage.getItem("user"));
   const role = user?.role;
@@ -47,6 +48,11 @@ function Sidebar() {
     localStorage.removeItem("user");
     window.location.href = "/login";
   };
+
+  /* ✅ اخفاء السيبدار في صفحة التفاصيل */
+  const hideSidebar = location.pathname.startsWith("/statements/");
+
+  if (hideSidebar) return null;
 
   /* MENU ITEMS */
   const menuItems = [
@@ -88,13 +94,13 @@ function Sidebar() {
     },
   ];
 
-  /* filter by role */
   const visibleItems = menuItems.filter((item) =>
     item.roles.includes(role)
   );
 
   return (
     <aside className="sidebar">
+
       {/* LOGO */}
       <div className="logo">
         {t("offeratdashboard")}
@@ -117,46 +123,46 @@ function Sidebar() {
       </nav>
 
       {/* FOOTER */}
-<div className="sidebar-footer">
-  <div className="sidebar-actions-card">
+      <div className="sidebar-footer">
+        <div className="sidebar-actions-card">
 
-    {/* LANGUAGE */}
-    <button className="action-btn lang-btn" onClick={toggleLang}>
-      <span className="icon-box">
-        <LanguageIcon />
-      </span>
+          {/* LANGUAGE */}
+          <button className="action-btn lang-btn" onClick={toggleLang}>
+            <span className="icon-box">
+              <LanguageIcon />
+            </span>
 
-      <div className="action-text">
-        <span className="action-title">Language</span>
-        <small>
-          {i18n.language === "en" ? "العربية" : "English"}
-        </small>
-      </div>
-    </button>
+            <div className="action-text">
+              <span className="action-title">Language</span>
+              <small>
+                {i18n.language === "en" ? "العربية" : "English"}
+              </small>
+            </div>
+          </button>
 
-    {/* LOGOUT */}
-    <button className="action-btn logout-btn" onClick={logout}>
-      <span className="icon-box">
-        <LogoutIcon />
-      </span>
+          {/* LOGOUT */}
+          <button className="action-btn logout-btn" onClick={logout}>
+            <span className="icon-box">
+              <LogoutIcon />
+            </span>
 
-      <div className="action-text">
-        <span className="action-title">
-          {t("logout")}
-        </span>
-        <small>End Session</small>
-      </div>
-    </button>
+            <div className="action-text">
+              <span className="action-title">
+                {t("logout")}
+              </span>
+              <small>End Session</small>
+            </div>
+          </button>
 
-  </div>
-</div>
-
-        {/* VERSION */}
-        <div className="sidebar-version">
-          Offerat ERP
-          <span>v1.0.0</span>
         </div>
-      
+      </div>
+
+      {/* VERSION */}
+      <div className="sidebar-version">
+        Offerat ERP
+        <span>v1.0.0</span>
+      </div>
+
     </aside>
   );
 }

@@ -1,10 +1,12 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useParams } from "react-router-dom";
 import API from "../api/axios";
 import { useTranslation } from "react-i18next";
 import { AgGridReact } from "ag-grid-react";
 import { ModuleRegistry, AllCommunityModule } from "ag-grid-community";
 import { Dialog, DialogTitle, DialogContent } from "@mui/material";
+
+
 import {
   Box,
   Paper,
@@ -20,17 +22,22 @@ import "ag-grid-community/styles/ag-theme-alpine.css";
 ModuleRegistry.registerModules([AllCommunityModule]);
 function StatementDetails() {
   const { id } = useParams();
+  const updateTimeout = useRef(null);
+  const [exporting, setExporting] = useState(false);
   const { t } = useTranslation();
+  const searchTimeout = useRef(null);
+const gridRef = useRef();
   const [auditOpen, setAuditOpen] = useState(false);
 const [auditLogs, setAuditLogs] = useState([]);
 const [selectedOrderId, setSelectedOrderId] = useState(null);
  const user = JSON.parse(localStorage.getItem("user"));
 const role = user?.role;
+const [totalRows, setTotalRows] = useState(0);
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
 
   const [page, setPage] = useState(0);
-  const [pageSize, setPageSize] = useState(50);
+  const [pageSize, setPageSize] = useState(1000);
 
   const [search, setSearch] = useState("");
 
@@ -50,6 +57,7 @@ const role = user?.role;
       );
 
       setOrders(res.data.data || []);
+      setTotalRows(res.data.total || 0);
     } catch (err) {
       console.log(err);
     } finally {
@@ -72,8 +80,21 @@ const openAudit = async (orderId) => {
 };
 useEffect(() => {
   loadOrders();
-}, [id, page, pageSize, search]);
-   const columnDefs = [
+}, [id, page, pageSize]);
+
+useEffect(() => {
+  if (searchTimeout.current) {
+    clearTimeout(searchTimeout.current);
+  }
+
+  searchTimeout.current = setTimeout(() => {
+    setPage(0);
+    loadOrders();
+  }, 500);
+
+  return () => clearTimeout(searchTimeout.current);
+}, [search]);
+   const columnDefs = useMemo(() => [
   {
     field: "externalOrderId",
     headerName: t("orderNumber"),
@@ -249,41 +270,36 @@ useEffect(() => {
     },
   },
 
-  {
-    field: "employeeNote",
-    headerName: t("employeeNote"),
-    width: 300,
-    editable: () =>
-      role === "EMPLOYEE" ||
-      role === "ADMIN",
+{
+  field: "employeeNote",
+  headerName: t("employeeNote"),
+  width: 300,
+  editable: () => role === "EMPLOYEE" || role === "ADMIN",
 
-    cellStyle: () => ({
-      background:
-        role === "EMPLOYEE" ||
-        role === "ADMIN"
-          ? "rgba(34,197,94,.08)"
-          : "transparent",
-    }),
+  cellEditor: "agLargeTextCellEditor",
+  cellEditorPopup: true,
+  cellEditorParams: {
+    maxLength: 5000,
+    rows: 6,
+    cols: 40,
   },
+},
 
-  {
-    field: "accountantNote",
-    headerName: t("accountantNote"),
-    width: 300,
-    editable: () =>
-      role === "ACCOUNTANT_1" ||
-      role === "ACCOUNTANT_2" ||
-      role === "ADMIN",
+ {
+  field: "accountantNote",
+  headerName: t("accountantNote"),
+  width: 300,
+  editable: () =>
+    role === "ACCOUNTANT_1" ||
+    role === "ACCOUNTANT_2" ||
+    role === "ADMIN",
 
-    cellStyle: () => ({
-      background:
-        role === "ACCOUNTANT_1" ||
-        role === "ACCOUNTANT_2" ||
-        role === "ADMIN"
-          ? "rgba(59,130,246,.08)"
-          : "transparent",
-    }),
+  cellEditor: "agLargeTextCellEditor",
+  cellEditorPopup: true,
+  cellEditorParams: {
+    rows: 6,
   },
+},
 
   ...(role === "ADMIN"
     ? [
@@ -311,57 +327,127 @@ useEffect(() => {
         },
       ]
     : []),
-];
+], [role, t]);
+
+const printSelectedRows = () => {
+  const api = gridRef.current?.api;
+  const selectedRows = api.getSelectedRows();
+
+  if (!selectedRows.length) {
+    alert("اختار صفوف أولاً");
+    return;
+  }
+
+  const columns = columnDefs.filter(col => col.field);
+
+  const printWindow = window.open("", "_blank");
+
+  // 👇 بدل تقسيم صفحات → تقسيم مجموعات عرض
+  const chunkSize = 10;
+  const chunks = [];
+
+  for (let i = 0; i < columns.length; i += chunkSize) {
+    chunks.push(columns.slice(i, i + chunkSize));
+  }
+
+  const tablesHtml = chunks.map((chunkCols, index) => {
+
+    const headers = chunkCols.map(col => `
+      <th>${col.headerName}</th>
+    `).join("");
+
+    const rows = selectedRows.map(row => `
+      <tr>
+        ${chunkCols.map(col => `
+          <td>${row[col.field] ?? "-"}</td>
+        `).join("")}
+      </tr>
+    `).join("");
+
+    return `
+      <div class="table-block">
+        <h3>جزء ${index + 1}</h3>
+
+        <table>
+          <thead>
+            <tr>${headers}</tr>
+          </thead>
+          <tbody>
+            ${rows}
+          </tbody>
+        </table>
+      </div>
+    `;
+  }).join("");
+
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Print</title>
+
+        <style>
+          body {
+            font-family: Arial;
+            direction: rtl;
+            padding: 20px;
+          }
+
+          .table-block {
+            margin-bottom: 30px;
+            page-break-inside: avoid;
+          }
+
+          h3 {
+            text-align: center;
+            margin: 10px 0;
+          }
+
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 11px;
+          }
+
+          th, td {
+            border: 1px solid #000;
+            padding: 5px;
+            text-align: center;
+          }
+
+          th {
+            background: #f2f2f2;
+          }
+
+          @media print {
+            .table-block {
+              page-break-inside: avoid;
+            }
+          }
+        </style>
+      </head>
+
+      <body>
+        ${tablesHtml}
+      </body>
+    </html>
+  `);
+
+  printWindow.document.close();
+};
+
 return (
   <Box
     sx={{
       p: 3,
-      minHeight: "100vh",
+      height: "100vh",
+      display: "flex",
+      flexDirection: "column",
+      overflow: "hidden",
       background:
         "radial-gradient(circle at top left,#0a0a0a 0%,#050505 55%,#000 100%)",
       color: "#fff",
     }}
   >
-    {/* HEADER */}
-    <Box
-      sx={{
-        display: "flex",
-        justifyContent: "space-between",
-        alignItems: "center",
-        mb: 3,
-      }}
-    >
-      <Typography
-        variant="h4"
-        sx={{
-          fontWeight: 900,
-          letterSpacing: 1,
-          background:
-            "linear-gradient(90deg,#facc15,#f59e0b,#fde047)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-        }}
-      >
-        {t("statementOrders")}
-      </Typography>
-
-      <Box
-        sx={{
-          px: 2,
-          py: 1,
-          borderRadius: "999px",
-          background: "rgba(250,204,21,.08)",
-          border: "1px solid rgba(250,204,21,.25)",
-          color: "#facc15",
-          fontWeight: 800,
-          fontSize: 13,
-          boxShadow: "0 0 25px rgba(250,204,21,.08)",
-        }}
-      >
-        {t("total")}: {orders.length}
-      </Box>
-    </Box>
-
     {/* SEARCH */}
     <Paper
       sx={{
@@ -371,8 +457,10 @@ return (
         background: "rgba(255,255,255,0.03)",
         backdropFilter: "blur(20px)",
         border: "1px solid rgba(250,204,21,0.1)",
+        flexShrink: 0,
       }}
     >
+      
       <Box sx={{ display: "flex", gap: 2 }}>
         <TextField
           fullWidth
@@ -409,8 +497,7 @@ return (
             fontWeight: 900,
             textTransform: "none",
             color: "#000",
-            background:
-              "linear-gradient(135deg,#facc15,#f59e0b)",
+            background: "linear-gradient(135deg,#facc15,#f59e0b)",
             boxShadow: "0 10px 25px rgba(250,204,21,.2)",
             "&:hover": {
               transform: "scale(1.03)",
@@ -419,13 +506,20 @@ return (
         >
           {t("searchButton")}
         </Button>
+<Button
+  variant="contained"
+  onClick={printSelectedRows}
+>
+  Print
+</Button>
       </Box>
     </Paper>
 
-    {/* GRID */}
+    {/* GRID (FULL HEIGHT MAGIC 🔥) */}
     <Paper
       sx={{
-        height: "78vh",
+        flex: 1,
+        minHeight: 0,
         borderRadius: "22px",
         overflow: "hidden",
         background: "rgba(255,255,255,0.02)",
@@ -445,48 +539,45 @@ return (
         <AgGridReact
           theme="legacy"
           rowData={orders}
+           ref={gridRef}
           columnDefs={columnDefs}
           loading={loading}
           pagination={true}
           paginationPageSize={pageSize}
-          rowSelection="single"
+          domLayout="normal"
+          rowSelection="multiple"
+rowMultiSelectWithClick={true}
           enableCellTextSelection={true}
-          animateRows={true}
+          animateRows={false}
           defaultColDef={{
             sortable: true,
             filter: true,
             resizable: true,
             floatingFilter: true,
             minWidth: 150,
-            flex: 1,
+            wrapText: true,
           }}
           onCellValueChanged={async (params) => {
-            try {
-              const payload = {};
+            if (updateTimeout.current)
+              clearTimeout(updateTimeout.current);
 
-              if (
-                params.colDef.field ===
-                "employeeNote"
-              ) {
-                payload.employeeNote =
-                  params.newValue;
+            updateTimeout.current = setTimeout(async () => {
+              try {
+                const payload = {};
+
+                if (params.colDef.field === "employeeNote") {
+                  payload.employeeNote = params.newValue;
+                }
+
+                if (params.colDef.field === "accountantNote") {
+                  payload.accountantNote = params.newValue;
+                }
+
+                await API.put(`/orders/${params.data.id}/notes`, payload);
+              } catch (err) {
+                console.log(err);
               }
-
-              if (
-                params.colDef.field ===
-                "accountantNote"
-              ) {
-                payload.accountantNote =
-                  params.newValue;
-              }
-
-              await API.put(
-                `/orders/${params.data.id}/notes`,
-                payload
-              );
-            } catch (err) {
-              console.log(err);
-            }
+            }, 400);
           }}
         />
       </div>
@@ -502,30 +593,18 @@ return (
         sx: {
           borderRadius: "22px",
           background: "rgba(10,10,10,0.95)",
-          border:
-            "1px solid rgba(250,204,21,0.1)",
+          border: "1px solid rgba(250,204,21,0.1)",
           color: "#fff",
         },
       }}
     >
-      <DialogTitle
-        sx={{
-          fontWeight: 900,
-          color: "#facc15",
-        }}
-      >
+      <DialogTitle sx={{ fontWeight: 900, color: "#facc15" }}>
         📜 {t("auditLogs")}
       </DialogTitle>
 
       <DialogContent>
         {auditLogs.length === 0 ? (
-          <Box
-            sx={{
-              py: 4,
-              textAlign: "center",
-              color: "#94a3b8",
-            }}
-          >
+          <Box sx={{ py: 4, textAlign: "center", color: "#94a3b8" }}>
             {t("noAuditLogsFound")}
           </Box>
         ) : (
@@ -536,46 +615,20 @@ return (
                 mb: 2,
                 p: 2,
                 borderRadius: "12px",
-                background:
-                  "rgba(255,255,255,0.03)",
-                border:
-                  "1px solid rgba(255,255,255,0.06)",
+                background: "rgba(255,255,255,0.03)",
+                border: "1px solid rgba(255,255,255,0.06)",
               }}
             >
-              <b style={{ color: "#fff" }}>
-                {log.userName}
-              </b>{" "}
-              <span
-                style={{ color: "#94a3b8" }}
-              >
-                ({log.role})
-              </span>
+              <b style={{ color: "#fff" }}>{log.userName}</b>{" "}
+              <span style={{ color: "#94a3b8" }}>({log.role})</span>
 
               <div>🧾 {log.action}</div>
+              <div>📌 {t("field")}: {log.field}</div>
+              <div>⬅️ {t("oldValue")}: {log.oldValue}</div>
+              <div>➡️ {log.newValue}: {log.newValue}</div>
 
-              <div>
-                📌 {t("field")}: {log.field}
-              </div>
-
-              <div>
-                ⬅️ {t("oldValue")}:{" "}
-                {log.oldValue}
-              </div>
-
-              <div>
-                ➡️ {t("newValue")}:{" "}
-                {log.newValue}
-              </div>
-
-              <div
-                style={{
-                  fontSize: 12,
-                  color: "#64748b",
-                }}
-              >
-                {new Date(
-                  log.createdAt
-                ).toLocaleString()}
+              <div style={{ fontSize: 12, color: "#64748b" }}>
+                {new Date(log.createdAt).toLocaleString()}
               </div>
             </Box>
           ))

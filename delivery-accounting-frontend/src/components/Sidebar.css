@@ -23,7 +23,11 @@
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }
-
+.editing-row {
+  transform: scale(1.01);
+  box-shadow: 0 0 20px rgba(250, 204, 21, 0.2);
+  transition: all 0.2s ease;
+}
 /* MENU ITEM */
 .menu-item {
   display: flex;
