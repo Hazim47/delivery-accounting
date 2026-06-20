@@ -19,15 +19,7 @@ const driverPaymentRoutes = require("./routes/driverPaymentRoutes");
 const statementRoutes =
   require("./routes/statementRoutes");
 const app = express();
-
-app.use(
-  cors({
-    origin: [
-      "https://delivery-accounting-alqralh2003-3750s-projects.vercel.app"
-    ],
-    credentials: true,
-  })
-);
+app.use(cors());
 app.use(express.json());
 app.use(
   "/api/driver-payments",
