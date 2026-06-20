@@ -34,9 +34,9 @@ const { t } = useTranslation();
       setLoading(true);
 
       const res = await API.post("/auth/login", {
-        username,
-        password,
-      });
+  username,
+  password,
+});
 
       localStorage.setItem("token", res.data.token);
       localStorage.setItem("user", JSON.stringify(res.data.user));
