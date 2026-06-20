@@ -22,7 +22,9 @@ const app = express();
 
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: [
+      "https://delivery-accounting-alqralh2003-3750s-projects.vercel.app"
+    ],
     credentials: true,
   })
 );
