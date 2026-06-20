@@ -1,0 +1,9 @@
+{
+  "dependencies": {
+    "arabic-persian-reshaper": "^1.0.1",
+    "bidi-js": "^1.0.3",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^4.2.1",
+    "pdfmake": "^0.2.7"
+  }
+}

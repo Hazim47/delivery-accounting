@@ -46,7 +46,7 @@ const login = async (req, res) => {
         role: user.role
       }
     });
-
+ console.log("BODY:", req.body);
   } catch (error) {
     console.log(error);
 
@@ -54,6 +54,7 @@ const login = async (req, res) => {
       message: "Server Error"
     });
   }
+ 
 };
 
 module.exports = {

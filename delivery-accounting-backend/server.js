@@ -3,11 +3,11 @@ require("dotenv").config();
 const app = require("./src/app");
 const sequelize = require("./src/config/database");
 const createAdmin = require("./src/createAdmin");
+require("./src/models");
 
 const PORT = process.env.PORT || 5000;
-require("./src/models");
-sequelize
-  .sync({alter: true})
+
+sequelize.sync()
   .then(async () => {
     console.log("Database Connected");
 
@@ -20,4 +20,3 @@ sequelize
   .catch((err) => {
     console.error(err);
   });
- 
