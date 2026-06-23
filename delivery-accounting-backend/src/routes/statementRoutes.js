@@ -9,6 +9,7 @@ const {
   getStatementOrders,
   updateEmployeeNote,
   updateAccountantNote,
+  toggleStatementLock,
 } = require(
   "../controllers/statementController"
 );
@@ -22,7 +23,10 @@ router.get(
   "/:id/orders",
   getStatementOrders
 );
-
+router.put(
+  "/:id/toggle-lock",
+  toggleStatementLock
+);
 router.put(
   "/orders/:id/employee-note",
   updateEmployeeNote

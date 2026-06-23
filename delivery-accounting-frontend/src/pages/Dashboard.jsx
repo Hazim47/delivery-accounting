@@ -28,26 +28,28 @@ function Dashboard() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 const { t } = useTranslation();
-  const fetchDashboard = async () => {
-    try {
-      setLoading(true);
-      setError(null);
+const [resetKey, setResetKey] = useState(0);
+const fetchDashboard = async () => {
+  try {
+    setLoading(true);
+    setError(null);
 
-      const response =
-        await API.get("/dashboard/overview");
+    const response = await API.get(
+      `/dashboard/overview?reset=${resetKey}`
+    );
 
-      setStats(response.data);
-    } catch (err) {
-      console.log(err);
-      setError("Failed to load dashboard");
-    } finally {
-      setLoading(false);
-    }
-  };
+    setStats(response.data);
+  } catch (err) {
+    console.log(err);
+    setError("Failed to load dashboard");
+  } finally {
+    setLoading(false);
+  }
+};
 
-  useEffect(() => {
-    fetchDashboard();
-  }, []);
+ useEffect(() => {
+  fetchDashboard();
+}, [resetKey]);
 
   if (loading) {
     return (
@@ -100,26 +102,7 @@ return (
         </p>
       </div>
 
-      <Button
-        variant="contained"
-        onClick={fetchDashboard}
-        sx={{
-          textTransform: "none",
-          fontWeight: 800,
-          borderRadius: "12px",
-          px: 3,
-          py: 1,
-          color: "#000",
-          background: "linear-gradient(135deg,#facc15,#f59e0b)",
-          boxShadow: "0 10px 30px rgba(250,204,21,0.25)",
-          "&:hover": {
-            background: "linear-gradient(135deg,#fde047,#facc15)",
-            transform: "scale(1.03)",
-          },
-        }}
-      >
-        {t("refresh")}
-      </Button>
+
     </div>
 
     {/* STATS GRID */}
@@ -129,37 +112,6 @@ return (
         value={stats?.totalOrders || 0}
         icon={<ShoppingCartIcon />}
       />
-
-      <StatCard
-        title={t("revenue")}
-        value={`${stats?.totalRevenue || 0} JD`}
-        icon={<MonetizationOnIcon />}
-      />
-
-      <StatCard
-        title={t("companyProfit")}
-        value={`${stats?.totalProfit || 0} JD`}
-        icon={<TrendingUpIcon />}
-      />
-
-      <StatCard
-        title={t("expenses")}
-        value={`${stats?.totalExpenses || 0} JD`}
-        icon={<ReceiptIcon />}
-      />
-
-      <StatCard
-        title={t("driverPayments")}
-        value={`${stats?.totalDriverPayments || 0} JD`}
-        icon={<LocalShippingIcon />}
-      />
-
-      <StatCard
-        title={t("netProfit")}
-        value={`${stats?.netProfit || 0} JD`}
-        icon={<AccountBalanceWalletIcon />}
-      />
-
       <StatCard
         title={t("drivers")}
         value={stats?.totalDrivers || 0}

@@ -23,7 +23,8 @@ function Statements() {
 const { t } = useTranslation();
   const [loading, setLoading] =
     useState(false);
-
+const user = JSON.parse(localStorage.getItem("user"));
+const role = user?.role;
   const [statements, setStatements] =
     useState([]);
 
@@ -66,7 +67,17 @@ const { t } = useTranslation();
   useEffect(() => {
     loadStatements();
   }, [page]);
+const toggleLock = async (statementId) => {
+  try {
+    await API.put(
+      `/statements/${statementId}/toggle-lock`
+    );
 
+    loadStatements();
+  } catch (err) {
+    console.log(err);
+  }
+};
 return (
   <Box
     sx={{
@@ -162,9 +173,23 @@ return (
                   },
                 }}
               >
-                <TableCell sx={{ fontWeight: 700 }}>
-                  {statement.fileName}
-                </TableCell>
+<TableCell sx={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 1 }}>
+  
+  {/* Status Dot */}
+  <Box
+    sx={{
+      width: 10,
+      height: 10,
+      borderRadius: "50%",
+      backgroundColor: statement.isLocked ? "#ef4444" : "#22c55e",
+      boxShadow: statement.isLocked
+        ? "0 0 8px rgba(239,68,68,0.8)"
+        : "0 0 8px rgba(34,197,94,0.8)",
+    }}
+  />
+
+  {statement.fileName}
+</TableCell>
 
                 <TableCell>
                   {statement.totalRows}
@@ -211,6 +236,24 @@ return (
                   >
                     {t("view")}
                   </Button>
+                  {role === "ADMIN" && (
+  <Button
+    variant="contained"
+    color={
+      statement.isLocked
+        ? "success"
+        : "error"
+    }
+    onClick={() =>
+      toggleLock(statement.id)
+    }
+    sx={{ ml: 1 }}
+  >
+    {statement.isLocked
+      ? "فتح"
+      : "إغلاق"}
+  </Button>
+)}
                 </TableCell>
               </TableRow>
             ))}

@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import API from "../api/axios";
 import offerat from "../assets/offerat.png";
 import { useTranslation } from "react-i18next";
-
+import { InputAdornment, IconButton } from "@mui/material";
+import Visibility from "@mui/icons-material/Visibility";
+import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import {
   Box,
   TextField,
@@ -22,7 +24,7 @@ const { t } = useTranslation();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
-
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -202,51 +204,122 @@ const { t } = useTranslation();
 
         {/* FORM */}
         <form onSubmit={handleLogin}>
-          <TextField
-            fullWidth
-            label={t("username")}
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-            sx={{
-              mb: 2,
-              "& .MuiOutlinedInput-root": {
-                borderRadius: "14px",
-                color: "#fff",
-                background: "rgba(255,255,255,0.04)",
-                "& fieldset": {
-                  borderColor: "rgba(255, 193, 7, 0.15)",
-                },
-                "&:hover fieldset": {
-                  borderColor: "#facc15",
-                },
-              },
-              "& .MuiInputLabel-root": { color: "#a1a1aa" },
-            }}
-          />
+<TextField
+  fullWidth
+  label={t("username")}
+  value={username}
+  onChange={(e) => setUsername(e.target.value)}
+  sx={{
+    mb: 2,
 
-          <TextField
-            fullWidth
-            type="password"
-            label={t("password")}
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            sx={{
-              mb: 2,
-              "& .MuiOutlinedInput-root": {
-                borderRadius: "14px",
-                color: "#fff",
-                background: "rgba(255,255,255,0.04)",
-                "& fieldset": {
-                  borderColor: "rgba(255, 193, 7, 0.15)",
-                },
-                "&:hover fieldset": {
-                  borderColor: "#facc15",
-                },
-              },
-              "& .MuiInputLabel-root": { color: "#a1a1aa" },
-            }}
-          />
+    "& .MuiOutlinedInput-root": {
+      borderRadius: "16px",
+      color: "#fff",
+      background: "rgba(255,255,255,0.05)",
+      backdropFilter: "blur(14px)",
+      transition: "all 0.25s ease",
 
+      "& fieldset": {
+        borderColor: "rgba(250, 204, 21, 0.15)",
+        transition: "0.3s",
+      },
+
+      "&:hover": {
+        transform: "translateY(-2px)",
+        boxShadow: "0 12px 30px rgba(250,204,21,0.10)",
+        background: "rgba(255,255,255,0.07)",
+      },
+
+      "&:hover fieldset": {
+        borderColor: "#facc15",
+      },
+
+      "&.Mui-focused fieldset": {
+        borderColor: "#facc15",
+        boxShadow: "0 0 0 2px rgba(250,204,21,0.25)",
+      },
+    },
+
+    "& .MuiInputLabel-root": {
+      color: "#a1a1aa",
+      letterSpacing: "0.3px",
+    },
+
+    "& .MuiInputLabel-root.Mui-focused": {
+      color: "#facc15",
+    },
+  }}
+/>
+<TextField
+  fullWidth
+  type={showPassword ? "text" : "password"}
+  label={t("password")}
+  value={password}
+  onChange={(e) => setPassword(e.target.value)}
+  autoComplete="current-password"
+  InputLabelProps={{ shrink: true }}
+  slotProps={{
+    input: {
+      endAdornment: (
+        <InputAdornment position="end">
+          <IconButton
+            onClick={() => setShowPassword((p) => !p)}
+            sx={{
+              color: "#facc15",
+              borderRadius: "10px",
+              transition: "0.25s",
+
+              "&:hover": {
+                background: "rgba(250,204,21,0.15)",
+                transform: "scale(1.1) rotate(3deg)",
+              },
+            }}
+          >
+            {showPassword ? <VisibilityOff /> : <Visibility />}
+          </IconButton>
+        </InputAdornment>
+      ),
+    },
+  }}
+  sx={{
+    mb: 2,
+
+    "& .MuiOutlinedInput-root": {
+      borderRadius: "16px",
+      color: "#fff",
+      background: "rgba(255,255,255,0.05)",
+      backdropFilter: "blur(14px)",
+      transition: "all 0.25s ease",
+
+      "& fieldset": {
+        borderColor: "rgba(250, 204, 21, 0.15)",
+      },
+
+      "&:hover": {
+        transform: "translateY(-2px)",
+        boxShadow: "0 14px 35px rgba(250,204,21,0.12)",
+        background: "rgba(255,255,255,0.07)",
+      },
+
+      "&:hover fieldset": {
+        borderColor: "#facc15",
+      },
+
+      "&.Mui-focused fieldset": {
+        borderColor: "#facc15",
+        boxShadow: "0 0 0 3px rgba(250,204,21,0.2)",
+      },
+    },
+
+    "& .MuiInputLabel-root": {
+      color: "#a1a1aa",
+    },
+
+    "& .MuiInputLabel-root.Mui-focused": {
+      color: "#facc15",
+    },
+  }}
+/>
           {/* OPTIONS */}
           <Box
             sx={{

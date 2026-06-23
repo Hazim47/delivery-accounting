@@ -199,10 +199,33 @@ const updateAccountantNote =
         });
     }
   };
+const toggleStatementLock = async (req, res) => {
+  try {
+    const statement = await ImportLog.findByPk(req.params.id);
 
+    if (!statement) {
+      return res.status(404).json({
+        message: "Statement not found",
+      });
+    }
+
+    statement.isLocked = !statement.isLocked;
+
+    await statement.save();
+
+    res.json(statement);
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      message: "Server Error",
+    });
+  }
+};
 module.exports = {
   getStatements,
   getStatementOrders,
   updateEmployeeNote,
   updateAccountantNote,
+  toggleStatementLock,
 };

@@ -128,7 +128,10 @@ accountantNoteAt: {
 distance: {
   type: DataTypes.STRING,
 },
-
+ImportLogId: {
+  type: DataTypes.INTEGER,
+  allowNull: true,
+},
 cancelReason: {
   type: DataTypes.TEXT,
 },

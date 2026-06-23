@@ -4,7 +4,11 @@ const Driver = require("../models/Driver");
 const User = require("../models/User");
 const { createAuditLog } = require("../utils/audit");
 const AuditLog = require("../models/AuditLog");
-// إنشاء طلب (optimized)
+const ImportLog = require("../models/ImportLog");
+
+/* =========================================================
+   CREATE ORDER
+========================================================= */
 const createOrder = async (req, res) => {
   try {
     const {
@@ -50,6 +54,8 @@ const createOrder = async (req, res) => {
       RestaurantId: restaurantId,
       DriverId: driverId,
       status: "PENDING",
+
+      ImportLogId: req.body.ImportLogId || null, // 🔥 مهم
     });
 
     res.status(201).json({
@@ -61,6 +67,10 @@ const createOrder = async (req, res) => {
     res.status(500).json({ message: "Server Error" });
   }
 };
+
+/* =========================================================
+   GET AUDIT
+========================================================= */
 const getOrderAudit = async (req, res) => {
   try {
     const { id } = req.params;
@@ -76,47 +86,48 @@ const getOrderAudit = async (req, res) => {
     res.status(500).json({ message: "Server Error" });
   }
 };
-// جلب الطلبات
+
+/* =========================================================
+   GET ORDERS
+========================================================= */
 const getOrders = async (req, res) => {
   try {
-   const page = Number(req.query.page) || 1;
-const limit =
-  Math.min(Number(req.query.limit) || 50, 100);
+    const page = Number(req.query.page) || 1;
+    const limit = Math.min(Number(req.query.limit) || 50, 100);
+    const offset = (page - 1) * limit;
 
-const offset = (page - 1) * limit;
+    const { rows, count } = await Order.findAndCountAll({
+      distinct: true,
+      include: [
+        {
+          association: "Restaurant",
+          attributes: ["id", "name"],
+        },
+        {
+          association: "Driver",
+          attributes: ["id", "fullName"],
+        },
+      ],
+      order: [["createdAt", "DESC"]],
+      limit,
+      offset,
+    });
 
-const { rows, count } =
-  await Order.findAndCountAll({
-    distinct: true,
-    include: [
-      {
-        association: "Restaurant",
-        attributes: ["id", "name"],
-      },
-      {
-        association: "Driver",
-        attributes: ["id", "fullName"],
-      },
-    ],
-    order: [["createdAt", "DESC"]],
-    limit,
-    offset,
-  });
-
-res.json({
-  total: count,
-  page,
-  totalPages: Math.ceil(count / limit),
-  orders: rows,
-});
+    res.json({
+      total: count,
+      page,
+      totalPages: Math.ceil(count / limit),
+      data: rows,
+    });
   } catch (error) {
     res.status(500).json({ message: "Server Error" });
   }
 };
 
-// تحديث الحالة (NO double earnings bug)
+/* =========================================================
+   UPDATE STATUS
+========================================================= */
 const updateOrderStatus = async (req, res) => {
-
   try {
     const { id } = req.params;
     const { status } = req.body;
@@ -126,8 +137,18 @@ const updateOrderStatus = async (req, res) => {
     if (!order) {
       return res.status(404).json({ message: "Order not found" });
     }
-  const oldEmployeeNote = order.employeeNote;
-const oldAccountantNote = order.accountantNote;
+
+    // 🔥 FIX: حماية القفل بشكل صحيح
+    if (order.ImportLogId) {
+      const statement = await ImportLog.findByPk(order.ImportLogId);
+
+      if (statement?.isLocked === true) {
+        return res.status(403).json({
+          message: "Statement is locked. Cannot update status.",
+        });
+      }
+    }
+
     const oldStatus = order.status;
 
     const isFirstDelivery =
@@ -158,7 +179,13 @@ const oldAccountantNote = order.accountantNote;
     res.status(500).json({ message: "Server Error" });
   }
 };
+
+/* =========================================================
+   UPDATE NOTES + FIELDS
+========================================================= */
 const updateOrderNotes = async (req, res) => {
+  console.log("UPDATE NOTES HIT");
+
   try {
     const { id } = req.params;
 
@@ -170,110 +197,78 @@ const updateOrderNotes = async (req, res) => {
       });
     }
 
-    const role = req.user.role;
+    // 🔥 FIX: حماية القفل (100% مضمونة)
+    if (order.ImportLogId) {
+      const statement = await ImportLog.findByPk(order.ImportLogId);
 
-    // 👇 هان بنجيب المستخدم بعد ما نتأكد order موجود
+      if (statement?.isLocked === true) {
+        return res.status(403).json({
+          message: "Statement is locked. Editing is not allowed.",
+        });
+      }
+    }
+
+    const role = req.user.role;
     const user = await User.findByPk(req.user.id);
 
-   if (role === "EMPLOYEE") {
-  if ("employeeNote" in req.body) {
+    const fieldPermissions = {
+      EMPLOYEE: [
+        "employeeNote",
+        "customerName",
+        "customerPhone",
+        "invoiceNumber",
+      ],
+      ACCOUNTANT_1: [
+        "accountantNote",
+        "commissionDescription",
+      ],
+      ACCOUNTANT_2: [
+        "accountantNote",
+        "commissionDescription",
+      ],
+      ADMIN: [
+        "employeeNote",
+        "accountantNote",
+        "customerName",
+        "customerPhone",
+        "invoiceNumber",
+        "commissionDescription",
+      ],
+    };
 
-    const oldValue = order.employeeNote;
+    const allowedFields = fieldPermissions[role] || [];
 
-    order.employeeNote = req.body.employeeNote || "";
-    order.employeeNoteBy = user.fullName;
-    order.employeeNoteAt = new Date();
+    for (const field of allowedFields) {
+      if (field in req.body) {
+        const oldValue = order[field];
 
-    await createAuditLog({
-      orderId: order.id,
-      user,
-      action: "UPDATE_EMPLOYEE_NOTE",
-      field: "employeeNote",
-      oldValue,
-      newValue: order.employeeNote,
-    });
-  }
-}
+        order[field] = req.body[field];
 
-   else if (
-  role === "ACCOUNTANT_1" ||
-  role === "ACCOUNTANT_2"
-) {
-  if ("accountantNote" in req.body) {
-
-    const oldValue = order.accountantNote;
-
-    order.accountantNote = req.body.accountantNote || "";
-    order.accountantNoteBy = user.fullName;
-    order.accountantNoteAt = new Date();
-
-    await createAuditLog({
-      orderId: order.id,
-      user,
-      action: "UPDATE_ACCOUNTANT_NOTE",
-      field: "accountantNote",
-      oldValue,
-      newValue: order.accountantNote,
-    });
-  }
-}
-
-  if (role === "ADMIN") {
-
-  if ("employeeNote" in req.body) {
-    const oldValue = order.employeeNote;
-
-    order.employeeNote = req.body.employeeNote || "";
-    order.employeeNoteBy = req.user.fullName;
-    order.employeeNoteAt = new Date();
-
-    await createAuditLog({
-      orderId: order.id,
-      user: req.user,
-      action: "UPDATE_EMPLOYEE_NOTE",
-      field: "employeeNote",
-      oldValue,
-      newValue: order.employeeNote,
-    });
-  }
-
-  if ("accountantNote" in req.body) {
-    const oldValue = order.accountantNote;
-
-    order.accountantNote = req.body.accountantNote || "";
-    order.accountantNoteBy = req.user.fullName;
-    order.accountantNoteAt = new Date();
-
-    await createAuditLog({
-      orderId: order.id,
-      user: req.user,
-      action: "UPDATE_ACCOUNTANT_NOTE",
-      field: "accountantNote",
-      oldValue,
-      newValue: order.accountantNote,
-    });
-  }
-}
-
-    console.log("ROLE:", role);
-    console.log("BODY:", req.body);
-    console.log(req.user);
+        await createAuditLog({
+          orderId: order.id,
+          user,
+          action: `UPDATE_${field.toUpperCase()}`,
+          field,
+          oldValue,
+          newValue: order[field],
+        });
+      }
+    }
 
     await order.save();
 
     res.json({
-      message: "Notes updated",
+      message: "Order updated successfully",
       order,
     });
-
   } catch (error) {
     console.log(error);
-
-    res.status(500).json({
-      message: "Server Error",
-    });
+    res.status(500).json({ message: "Server Error" });
   }
 };
+
+/* ========================================================= */
+
 module.exports = {
   createOrder,
   getOrders,

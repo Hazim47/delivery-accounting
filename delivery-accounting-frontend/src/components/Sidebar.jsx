@@ -63,18 +63,6 @@ function Sidebar() {
       roles: ["ADMIN", "ACCOUNTANT_1", "ACCOUNTANT_2", "EMPLOYEE"],
     },
     {
-      title: t("drivers"),
-      icon: <PeopleIcon />,
-      path: "/drivers",
-      roles: ["ADMIN", "ACCOUNTANT_1", "ACCOUNTANT_2", "EMPLOYEE"],
-    },
-    {
-      title: t("restaurants"),
-      icon: <RestaurantIcon />,
-      path: "/restaurants",
-      roles: ["ADMIN", "ACCOUNTANT_1", "ACCOUNTANT_2", "EMPLOYEE"],
-    },
-    {
       title: t("importExcel"),
       icon: <CloudUploadIcon />,
       path: "/import-orders",

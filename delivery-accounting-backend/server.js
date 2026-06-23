@@ -7,9 +7,11 @@ require("./src/models");
 
 const PORT = process.env.PORT || 5000;
 
-sequelize.sync({ alter: false })
+sequelize.sync({ alter: true })
   .then(async () => {
     console.log("Database Connected");
+    console.log("JWT_SECRET =", process.env.JWT_SECRET);
+    console.log("PORT =", process.env.PORT);
 
     await createAdmin();
 

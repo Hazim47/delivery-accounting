@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import API from "../api/axios";
 import { useTranslation } from "react-i18next";
+import KeyIcon from "@mui/icons-material/Key";
 import {
   Box,
   Paper,
@@ -30,9 +31,16 @@ function Users() {
   const [users, setUsers] = useState([]);
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
-
+  
   const [open, setOpen] = useState(false);
+ const [resetOpen, setResetOpen] =
+  useState(false);
 
+const [selectedUser, setSelectedUser] =
+  useState(null);
+
+const [newPassword, setNewPassword] =
+  useState("");
   const [fullName, setFullName] = useState("");
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -86,12 +94,30 @@ function Users() {
       );
     }
   };
+const openResetPassword = (user) => {
+  setSelectedUser(user);
+  setNewPassword("");
+  setResetOpen(true);
+};
+const resetPassword = async () => {
+  try {
+    await API.put(
+      `/users/${selectedUser.id}/reset-password`,
+      {
+        password: newPassword,
+      }
+    );
 
+    alert("Password updated");
+
+    setResetOpen(false);
+  } catch (err) {
+    console.log(err);
+  }
+};
   const deleteUser = async (id) => {
-    if (
-     window.confirm(t("deleteThisUser"))
-    )
-      return;
+if (!window.confirm(t("deleteThisUser")))
+  return;
 
     try {
       await API.delete(
@@ -246,7 +272,7 @@ return (
             </TableHead>
 
             <TableBody>
-              {users.map((user) => (
+              {users.map((user, index) => (
                 <TableRow
                   key={user.id}
                   hover
@@ -261,7 +287,7 @@ return (
                     },
                   }}
                 >
-                  <TableCell>{user.id}</TableCell>
+                  <TableCell>{index + 1}</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>
                     {user.fullName}
                   </TableCell>
@@ -300,6 +326,19 @@ return (
                     >
                       <DeleteIcon />
                     </IconButton>
+                    <IconButton
+  onClick={() =>
+    openResetPassword(user)
+  }
+  sx={{
+    mr: 1,
+    background:
+      "rgba(250,204,21,0.12)",
+    color: "#facc15",
+  }}
+>
+  <KeyIcon />
+</IconButton>
                   </TableCell>
                 </TableRow>
               ))}
@@ -348,6 +387,11 @@ return (
   { label: t("password"), value: password, set: setPassword, type: "password" },
 ].map((f) => (
           <TextField
+            InputProps={{
+    sx: {
+      color: "#000",
+    },
+  }}
             key={f.label}
             fullWidth
             label={f.label}
@@ -358,7 +402,7 @@ return (
             sx={{
               "& .MuiOutlinedInput-root": {
                 borderRadius: "14px",
-                color: "#fff",
+                color: "#000000",
                 background: "rgba(255,255,255,0.04)",
                 "& fieldset": {
                   borderColor: "rgba(250,204,21,0.12)",
@@ -368,36 +412,40 @@ return (
                 },
               },
               "& .MuiInputLabel-root": {
-                color: "#a1a1aa",
+                color: "#000000",
               },
             }}
           />
         ))}
+<TextField
+  select
+  fullWidth
+  label={t("role")}
+  value={role}
+  onChange={(e) => setRole(e.target.value)}
+  sx={{
+    "& .MuiOutlinedInput-root": {
+      borderRadius: "14px",
+      background: "rgba(255,255,255,0.04)",
 
-        <TextField
-          select
-          fullWidth
-         label={t("role")}
-          margin="normal"
-          value={role}
-          onChange={(e) => setRole(e.target.value)}
-          sx={{
-            "& .MuiOutlinedInput-root": {
-              borderRadius: "14px",
-              color: "#fff",
-              background: "rgba(255,255,255,0.04)",
-              "& fieldset": {
-                borderColor: "rgba(250,204,21,0.12)",
-              },
-              "&:hover fieldset": {
-                borderColor: "#facc15",
-              },
-            },
-            "& .MuiInputLabel-root": {
-              color: "#a1a1aa",
-            },
-          }}
-        >
+      "& .MuiSelect-select": {
+        color: "#000",
+      },
+
+      "& fieldset": {
+        borderColor: "rgba(250,204,21,0.12)",
+      },
+    },
+
+    "& .MuiInputLabel-root": {
+      color: "#000",
+    },
+
+    "& .MuiInputLabel-root.Mui-focused": {
+      color: "#000",
+    },
+  }}
+>
           <MenuItem value="EMPLOYEE">EMPLOYEE</MenuItem>
           <MenuItem value="ACCOUNTANT_1">ACCOUNTANT_1</MenuItem>
           <MenuItem value="ACCOUNTANT_2">ACCOUNTANT_2</MenuItem>
@@ -430,7 +478,46 @@ return (
           {t("save")}
         </Button>
       </DialogActions>
+      
     </Dialog>
+    <Dialog
+  open={resetOpen}
+  onClose={() => setResetOpen(false)}
+  fullWidth
+>
+  <DialogTitle>
+    Reset Password
+  </DialogTitle>
+
+  <DialogContent>
+    <TextField
+      fullWidth
+      label="New Password"
+      margin="normal"
+      value={newPassword}
+      onChange={(e) =>
+        setNewPassword(e.target.value)
+      }
+    />
+  </DialogContent>
+
+  <DialogActions>
+    <Button
+      onClick={() =>
+        setResetOpen(false)
+      }
+    >
+      Cancel
+    </Button>
+
+    <Button
+      variant="contained"
+      onClick={resetPassword}
+    >
+      Save
+    </Button>
+  </DialogActions>
+</Dialog>
   </Box>
 );
 }

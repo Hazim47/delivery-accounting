@@ -29,7 +29,10 @@ restaurantsCreated: {
   type: DataTypes.INTEGER,
   defaultValue: 0,
 },
-
+isLocked: {
+  type: DataTypes.BOOLEAN,
+  defaultValue: false,
+},
 driversCreated: {
   type: DataTypes.INTEGER,
   defaultValue: 0,

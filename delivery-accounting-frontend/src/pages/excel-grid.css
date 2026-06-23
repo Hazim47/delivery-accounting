@@ -1,0 +1,64 @@
+
+/* ===== Excel Grid Base ===== */
+.excel-grid.ag-theme-alpine {
+  --ag-background-color: #0b0b0b;
+  --ag-foreground-color: #ffffff;
+  --ag-header-background-color: #111;
+  --ag-header-foreground-color: #facc15;
+
+  /* 🔥 ارتفاع الصف (تكبير الخلايا) */
+  --ag-row-height: 48px;
+}
+
+/* ===== CELL (الخلايا) ===== */
+.excel-grid .ag-cell {
+  font-size: 16px;              /* حجم النص */
+  font-weight: 500;
+  padding: 12px 14px;           /* تكبير داخل الخلية */
+
+  display: flex;
+  align-items: center;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  /* خطوط الأعمدة فقط */
+  border-right: 1px solid rgba(255,255,255,0.08);
+}
+
+/* ===== HEADER (العناوين) ===== */
+.excel-grid .ag-header-cell-label {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+/* ===== HEADER borders ===== */
+.excel-grid .ag-header-cell {
+  border-right: 1px solid rgba(255,255,255,0.12);
+}
+
+/* ===== ROW (بدون تلوين صفوف) ===== */
+.excel-grid .ag-row {
+  background: transparent !important;
+}
+
+/* ===== hover خفيف ===== */
+.excel-grid .ag-row:hover {
+  background: rgba(250, 204, 21, 0.04);
+}
+
+/* ===== الخلية المحددة ===== */
+.excel-grid .ag-cell-focus {
+  outline: 2px solid #facc15 !important;
+  z-index: 2;
+}
+
+/* ===== سكرول خلفية نظيفة ===== */
+.ag-body-horizontal-scroll {
+  background: #0b0b0b;
+}
+.excel-page {
+  height: 100vh;
+  overflow: hidden; /* 🚫 يمنع السكرول داخل الصفحة */
+}

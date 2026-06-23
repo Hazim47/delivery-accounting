@@ -9,6 +9,7 @@ const {
   createUser,
   getUsers,
   deleteUser,
+  resetUserPassword
 } = require("../controllers/userController");
 
 // Get all users
@@ -34,5 +35,10 @@ router.delete(
   roleMiddleware("ADMIN"),
   deleteUser
 );
-
+router.put(
+  "/:id/reset-password",
+  authMiddleware,
+  roleMiddleware("ADMIN"),
+  resetUserPassword
+);
 module.exports = router;

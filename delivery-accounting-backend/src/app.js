@@ -19,7 +19,9 @@ const driverPaymentRoutes = require("./routes/driverPaymentRoutes");
 const statementRoutes =
   require("./routes/statementRoutes");
 const app = express();
-app.use(cors());
+app.use(
+  cors({ })
+);
 app.use(express.json());
 app.use(
   "/api/driver-payments",

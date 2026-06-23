@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { AgGridReact } from "ag-grid-react";
 import { ModuleRegistry, AllCommunityModule } from "ag-grid-community";
 import { Dialog, DialogTitle, DialogContent } from "@mui/material";
-
+import "./excel-grid.css";
 
 import {
   Box,
@@ -27,6 +27,7 @@ function StatementDetails() {
   const { t } = useTranslation();
   const searchTimeout = useRef(null);
 const gridRef = useRef();
+const [isLocked, setIsLocked] = useState(false);
   const [auditOpen, setAuditOpen] = useState(false);
 const [auditLogs, setAuditLogs] = useState([]);
 const [selectedOrderId, setSelectedOrderId] = useState(null);
@@ -57,7 +58,11 @@ const [totalRows, setTotalRows] = useState(0);
       );
 
       setOrders(res.data.data || []);
-      setTotalRows(res.data.total || 0);
+setOrders(res.data.data || []);
+setTotalRows(res.data.total || 0);
+
+// إذا عندك isLocked من backend (مهم)
+setIsLocked(res.data.isLocked || false);
     } catch (err) {
       console.log(err);
     } finally {
@@ -153,18 +158,25 @@ useEffect(() => {
     headerName: t("tariff"),
     width: 120,
   },
-
   {
-    field: "customerName",
-    headerName: t("customerName"),
-    width: 220,
-  },
+  field: "customerName",
+  headerName: t("customerName"),
+  width: 200,
+  editable: () => {
+  if (isLocked) return false;
+  return role === "EMPLOYEE" || role === "ADMIN";
+},
+},
 
-  {
-    field: "customerPhone",
-    headerName: t("customerPhone"),
-    width: 180,
-  },
+{
+  field: "customerPhone",
+  headerName: t("customerPhone"),
+  width: 180,
+  editable: () => {
+  if (isLocked) return false;
+  return role === "EMPLOYEE" || role === "ADMIN";
+},
+},
 
   {
     field: "customerAddress",
@@ -189,37 +201,63 @@ useEffect(() => {
     headerName: t("deliveryFee"),
     width: 130,
   },
-
   {
+
     field: "vehicleType",
+
     headerName: t("vehicleType"),
+
     width: 140,
+
   },
 
+
+
   {
+
     field: "distance",
+
     headerName: t("distance"),
+
     width: 120,
+
   },
 
-  {
-    field: "invoiceNumber",
-    headerName: t("invoiceNumber"),
-    width: 180,
-  },
+
+
+{
+  field: "invoiceNumber",
+  headerName: t("invoiceNumber"),
+  width: 180,
+ editable: () => {
+  if (isLocked) return false;
+  return role === "EMPLOYEE" || role === "ADMIN";
+},
+},
+
+
 
   {
+
     field: "companyCommission",
+
     headerName: t("commission"),
+
     width: 140,
+
   },
 
-  {
-    field: "commissionDescription",
-    headerName: t("commissionDescription"),
-    width: 250,
-  },
 
+
+{
+  field: "commissionDescription",
+  headerName: t("commissionDescription"),
+  width: 250,
+  editable: () =>
+    role === "ACCOUNTANT_1" ||
+    role === "ACCOUNTANT_2" ||
+    role === "ADMIN",
+},
   {
     field: "cancelReason",
     headerName: t("cancelReason"),
@@ -328,7 +366,13 @@ useEffect(() => {
       ]
     : []),
 ], [role, t]);
+useEffect(() => {
+  document.body.style.overflow = "hidden";
 
+  return () => {
+    document.body.style.overflow = "auto";
+  };
+}, []);
 const printSelectedRows = () => {
   const api = gridRef.current?.api;
   const selectedRows = api.getSelectedRows();
@@ -438,7 +482,9 @@ const printSelectedRows = () => {
 return (
   <Box
     sx={{
-      p: 3,
+       px: 3,
+    pt: 1,   // ⬆️ نرفع المحتوى لفوق
+    pb: 2,
       height: "100vh",
       display: "flex",
       flexDirection: "column",
@@ -451,9 +497,9 @@ return (
     {/* SEARCH */}
     <Paper
       sx={{
-        p: 2,
-        mb: 2,
-        borderRadius: "18px",
+  p: 1.2,
+  mb: 1,
+  borderRadius: "14px",
         background: "rgba(255,255,255,0.03)",
         backdropFilter: "blur(20px)",
         border: "1px solid rgba(250,204,21,0.1)",
@@ -518,14 +564,19 @@ return (
     {/* GRID (FULL HEIGHT MAGIC 🔥) */}
     <Paper
       sx={{
-        flex: 1,
-        minHeight: 0,
-        borderRadius: "22px",
-        overflow: "hidden",
+       
+       
+        
         background: "rgba(255,255,255,0.02)",
         backdropFilter: "blur(22px)",
         border: "1px solid rgba(250,204,21,0.1)",
         boxShadow: "0 30px 90px rgba(0,0,0,0.6)",
+            flex: 1,
+    minHeight: 0,
+    overflow: "hidden",
+    display: "flex",
+    flexDirection: "column",
+    borderRadius: "22px",
       }}
     >
       <div
@@ -536,49 +587,65 @@ return (
           padding: "8px",
         }}
       >
-        <AgGridReact
-          theme="legacy"
-          rowData={orders}
-           ref={gridRef}
-          columnDefs={columnDefs}
-          loading={loading}
-          pagination={true}
-          paginationPageSize={pageSize}
-          domLayout="normal"
-          rowSelection="multiple"
-rowMultiSelectWithClick={true}
-          enableCellTextSelection={true}
-          animateRows={false}
-          defaultColDef={{
-            sortable: true,
-            filter: true,
-            resizable: true,
-            floatingFilter: true,
-            minWidth: 150,
-            wrapText: true,
-          }}
-          onCellValueChanged={async (params) => {
-            if (updateTimeout.current)
-              clearTimeout(updateTimeout.current);
+       <AgGridReact
+  ref={gridRef}
+  rowData={orders}
+  columnDefs={columnDefs}
+  loading={loading}
+  pagination={true}
+  suppressClickEdit={isLocked}
+singleClickEdit={!isLocked}
+  paginationPageSize={pageSize}
+  domLayout="normal"
+  rowSelection="multiple"
+  rowMultiSelectWithClick={true}
+  enableCellTextSelection={true}
+  animateRows={false}
 
-            updateTimeout.current = setTimeout(async () => {
-              try {
-                const payload = {};
+  className="excel-grid ag-theme-alpine"   // 🔥 هذا أهم سطر
 
-                if (params.colDef.field === "employeeNote") {
-                  payload.employeeNote = params.newValue;
-                }
+  defaultColDef={{
+  sortable: true,
+  filter: true,
+  minWidth: 180, 
+  resizable: true,
+  floatingFilter: true,
+  minWidth: 140,
+  autoHeight: false,
+  wrapText: false,
+}}
 
-                if (params.colDef.field === "accountantNote") {
-                  payload.accountantNote = params.newValue;
-                }
+onCellValueChanged={async (params) => {
+  if (updateTimeout.current)
+    clearTimeout(updateTimeout.current);
 
-                await API.put(`/orders/${params.data.id}/notes`, payload);
-              } catch (err) {
-                console.log(err);
-              }
-            }, 400);
-          }}
+  updateTimeout.current = setTimeout(async () => {
+    try {
+
+      const editableFields = [
+        "employeeNote",
+        "accountantNote",
+        "customerName",
+        "customerPhone",
+        "invoiceNumber",
+        "commissionDescription",
+      ];
+
+      const field = params.colDef.field;
+
+      if (!editableFields.includes(field)) return;
+
+      const payload = {
+        [field]: params.newValue,
+      };
+
+      await API.put(`/orders/${params.data.id}/notes`, payload);
+
+    } catch (err) {
+      console.log(err);
+    }
+  }, 400);
+}}
         />
       </div>
     </Paper>

@@ -65,21 +65,26 @@ function ImportOrders() {
     }
   };
 
-  const deleteImport = async (id) => {
-    const ok = window.confirm(
-      t("deleteImportConfirm")
-    );
-    if (!ok) return;
+const deleteImport = async (id) => {
+  const ok = window.confirm(t("deleteImportConfirm"));
+  if (!ok) return;
 
-    try {
-      await API.delete(`/import/logs/${id}`);
-      loadLogs();
-    } catch (error) {
-      console.log(error);
-      alert(t("deleteFailed"));
-    }
-  };
+  try {
+    const res = await API.delete(`/import/logs/${id}`);
 
+    console.log("DELETE SUCCESS:", res.data);
+
+    await loadLogs();
+  } catch (error) {
+    console.log("FULL ERROR:", error);
+    console.log("RESPONSE:", error.response?.data);
+    console.log("STATUS:", error.response?.status);
+
+    alert(error.response?.data?.message || "Delete failed");
+  }
+};
+const user = JSON.parse(localStorage.getItem("user"));
+const isAdmin = user?.role === "ADMIN";
 return (
   <Box
     sx={{
@@ -315,7 +320,7 @@ return (
   t("restaurants"),
   t("drivers"),
   t("date"),
-  t("actions"),
+  ...(isAdmin ? [t("actions")] : []),
 ].map((h) => (
                 <TableCell
                   key={h}
@@ -334,7 +339,7 @@ return (
             {logs.length === 0 ? (
               <TableRow>
                 <TableCell
-                  colSpan={8}
+                 colSpan={isAdmin ? 8 : 7}
                   align="center"
                   sx={{ color: "#a1a1aa", py: 5 }}
                 >
@@ -369,22 +374,24 @@ return (
                     {new Date(log.createdAt).toLocaleString()}
                   </TableCell>
 
-                  <TableCell>
-                    <Button
-                      color="error"
-                      variant="contained"
-                      size="small"
-                      startIcon={<DeleteIcon />}
-                      onClick={() => deleteImport(log.id)}
-                      sx={{
-                        borderRadius: "10px",
-                        fontWeight: 800,
-                        textTransform: "none",
-                      }}
-                    >
-                      {t("delete")}
-                    </Button>
-                  </TableCell>
+             {isAdmin && (
+  <TableCell>
+    <Button
+      color="error"
+      variant="contained"
+      size="small"
+      startIcon={<DeleteIcon />}
+      onClick={() => deleteImport(log.id)}
+      sx={{
+        borderRadius: "10px",
+        fontWeight: 800,
+        textTransform: "none",
+      }}
+    >
+      {t("delete")}
+    </Button>
+  </TableCell>
+)}
                 </TableRow>
               ))
             )}
