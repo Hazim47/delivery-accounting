@@ -1,5 +1,6 @@
 const Restaurant = require("../models/Restaurant");
-
+const { Op } = require("sequelize");
+const Order = require("../models/Order");
 // إضافة مطعم
 const createRestaurant = async (req, res) => {
   try {
@@ -22,27 +23,140 @@ const createRestaurant = async (req, res) => {
   }
 };
 
+const getRestaurantDetails = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { from, to } = req.query;
+    
+    // المطعم
+    const restaurant = await Restaurant.findByPk(id);
+
+    if (!restaurant) {
+      return res.status(404).json({
+        message: "Restaurant not found",
+      });
+    }
+
+const where = {
+  RestaurantId: id,
+};
+
+if (from && to) {
+  where.orderDate = {
+    [Op.between]: [from, to],
+  };
+} else if (from) {
+  where.orderDate = {
+    [Op.gte]: from,
+  };
+} else if (to) {
+  where.orderDate = {
+    [Op.lte]: to,
+  };
+}
+// ======== أضفهم هنا ========
+console.log("FROM:", from);
+console.log("TO:", to);
+console.log("WHERE:", where);
+
+const sample = await Order.findOne();
+console.log("DATES IN DB SAMPLE:", sample);
+// ===========================
+
+// الطلبات
+let orders = [];
+
+try {
+  orders = await Order.findAll({
+    where,
+    order: [["orderDate", "DESC"]],
+  });
+
+  console.log("ORDERS FOUND:", orders.length);
+} catch (e) {
+  console.log("FIND ALL ERROR:");
+  console.log(e);
+  throw e;
+}
+
+    // الإحصائيات
+    const totalOrders = orders.length;
+
+    const totalSales = orders.reduce(
+      (sum, order) => sum + Number(order.orderAmount || 0),
+      0
+    );
+const totalTariff = orders.reduce(
+  (sum, order) => sum + Number(order.tariff || 0),
+  0
+);
+    const totalCaptainDiscount = orders.reduce(
+      (sum, order) => sum + Number(order.driverEarning || 0),
+      0
+    );
+
+    const restaurantNet = orders.reduce(
+      (sum, order) => sum + Number(order.restaurantEarning || 0),
+      0
+    );
+
+    res.json({
+      restaurant,
+      stats: {
+        totalOrders,
+        totalSales,
+        totalCaptainDiscount,
+        restaurantNet,
+        totalTariff,
+      },
+      orders,
+    });
+ 
+  } catch (err) {
+console.log(err);
+
+console.log(err.name);
+console.log(err.message);
+
+console.log(err.parent);
+
+console.log(err.original);
+
+console.log(err.stack);
+    res.status(500).json({
+      message: "Server Error",
+    });
+  }
+};
+const getRestaurantById = async (req, res) => {
+  try {
+    const restaurant = await Restaurant.findByPk(req.params.id);
+
+    if (!restaurant) {
+      return res.status(404).json({
+        message: "Restaurant not found",
+      });
+    }
+
+    res.json({
+      restaurant,
+    });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      message: "Server Error",
+    });
+  }
+};
 // جلب كل المطاعم
 const getRestaurants = async (req, res) => {
   try {
-    const page = Number(req.query.page) || 1;
-const limit =
-  Math.min(Number(req.query.limit) || 50, 100);
-
-const offset = (page - 1) * limit;
-
-const { rows, count } =
-  await Restaurant.findAndCountAll({
-    limit,
-    offset,
-    order: [["createdAt", "DESC"]],
-  });
+const restaurants = await Restaurant.findAll({
+  order: [["createdAt", "DESC"]],
+});
 
 res.json({
-  total: count,
-  page,
-  totalPages: Math.ceil(count / limit),
-  restaurants: rows,
+  restaurants,
 });
   } catch (error) {
     res.status(500).json({ message: "Server Error" });
@@ -95,4 +209,6 @@ module.exports = {
   getRestaurants,
   updateRestaurant,
   deleteRestaurant,
+  getRestaurantDetails,
+  getRestaurantById,
 };

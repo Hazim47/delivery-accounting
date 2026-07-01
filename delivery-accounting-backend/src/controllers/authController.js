@@ -9,6 +9,7 @@ const login = async (req, res) => {
     const user = await User.findOne({
       where: { username }
     });
+    console.log(user.permissions);
 
     if (!user) {
       return res.status(401).json({
@@ -40,11 +41,12 @@ const login = async (req, res) => {
 
     res.json({
       token,
-      user: {
-        id: user.id,
-        fullName: user.fullName,
-        role: user.role
-      }
+   user: {
+  id: user.id,
+  fullName: user.fullName,
+  role: user.role,
+  permissions: user.permissions || []
+}
     });
  console.log("BODY:", req.body);
   } catch (error) {

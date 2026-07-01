@@ -40,7 +40,40 @@ const getStatements = async (req, res) => {
       });
   }
 };
+const updateOrderField = async (req, res) => {
+  try {
+    const result = await checkIfLocked(
+    req.params.id,
+    req.user
+);
 
+    if (result.error === "not_found") {
+      return res.status(404).json({ message: "Order not found" });
+    }
+    if (result.error === "locked") {
+      return res.status(403).json({ message: "Statement is locked (read-only mode)" });
+    }
+
+    const field = Object.keys(req.body)[0];
+
+    // تحقق الصلاحية بالباك مش بس بالفرونت
+    if (req.user?.role !== "ADMIN") {
+      const allowed = req.user?.permissions?.[field] === true;
+      if (!allowed) {
+        return res.status(403).json({ message: "لا تملك صلاحية تعديل هذا الحقل" });
+      }
+    }
+
+    const order = result.order;
+    order[field] = req.body[field];
+    await order.save();
+
+    return res.json({ success: true });
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ message: "Error" });
+  }
+};
 const getStatementOrders =
   async (req, res) => {
     try {
@@ -92,7 +125,13 @@ const getStatementOrders =
           },
         ];
       }
+const statement = await ImportLog.findByPk(id);
 
+if (!statement) {
+  return res.status(404).json({
+    message: "Statement not found",
+  });
+}
       const {
         count,
         rows,
@@ -106,14 +145,13 @@ const getStatementOrders =
           offset,
         });
 
-      return res.json({
-        total: count,
-        page,
-        pages: Math.ceil(
-          count / limit
-        ),
-        data: rows,
-      });
+  return res.json({
+  total: count,
+  page,
+  pages: Math.ceil(count / limit),
+  isLocked: statement.isLocked,
+  data: rows,
+});
     } catch (error) {
       console.log(error);
 
@@ -125,101 +163,95 @@ const getStatementOrders =
         });
     }
   };
+const checkIfLocked = async (orderId, user) => {
+  const order = await Order.findByPk(orderId);
 
-const updateEmployeeNote =
-  async (req, res) => {
-    try {
-      const order =
-        await Order.findByPk(
-          req.params.id
-        );
+  if (!order) return { error: "not_found" };
 
-      if (!order) {
-        return res
-          .status(404)
-          .json({
-            message:
-              "Order not found",
-          });
-      }
+  const statement = await ImportLog.findByPk(order.ImportLogId);
 
-      order.employeeNote =
-        req.body.note || "";
+  if (statement?.isLocked && user.role !== "ADMIN") {
+    return { error: "locked" };
+  }
 
-      await order.save();
+  return { order };
+};
+const updateEmployeeNote = async (req, res) => {
+  try {
+    const order = req.order;
 
-      return res.json({
-        success: true,
-      });
-    } catch (error) {
-      console.log(error);
+    order.employeeNote = req.body.note || "";
+    await order.save();
 
-      return res
-        .status(500)
-        .json({
-          message:
-            "Failed to update note",
-        });
+    return res.json({ success: true });
+  } catch (error) {
+    console.log(error);
+    return res.status(500).json({ message: "Failed to update note" });
+  }
+};
+const updateAccountantNote = async (req, res) => {
+  try {
+    const order = req.order;
+
+    order.accountantNote = req.body.note || "";
+    await order.save();
+
+    return res.json({ success: true });
+  } catch (error) {
+    console.log(error);
+
+    return res.status(500).json({ message: "Failed to update note" });
+  }
+};
+const checkStatementLocked = async (req, res, next) => {
+  try {
+    const orderId = req.params.id;
+
+    const order = await Order.findByPk(orderId);
+    if (!order) {
+      return res.status(404).json({ message: "Order not found" });
     }
-  };
 
-const updateAccountantNote =
-  async (req, res) => {
-    try {
-      const order =
-        await Order.findByPk(
-          req.params.id
-        );
+    const statement = await ImportLog.findByPk(order.ImportLogId);
 
-      if (!order) {
-        return res
-          .status(404)
-          .json({
-            message:
-              "Order not found",
-          });
-      }
+   if (
+    statement?.isLocked &&
+    req.user.role !== "ADMIN"
+) {
+    return res.status(403).json({
+        message: "Statement is locked"
+    });
+}
 
-      order.accountantNote =
-        req.body.note || "";
+    req.order = order;
+    req.statement = statement;
 
-      await order.save();
-
-      return res.json({
-        success: true,
-      });
-    } catch (error) {
-      console.log(error);
-
-      return res
-        .status(500)
-        .json({
-          message:
-            "Failed to update note",
-        });
-    }
-  };
+    next();
+  } catch (err) {
+    console.log(err);
+    return res.status(500).json({ message: "Server error" });
+  }
+};
 const toggleStatementLock = async (req, res) => {
   try {
+     console.log(req.user);
+    if (req.user?.role !== "ADMIN") {
+      return res.status(403).json({ message: "غير مصرح، للأدمن فقط" });
+    }
+
     const statement = await ImportLog.findByPk(req.params.id);
 
     if (!statement) {
-      return res.status(404).json({
-        message: "Statement not found",
-      });
+      return res.status(404).json({ message: "Statement not found" });
     }
 
     statement.isLocked = !statement.isLocked;
-
     await statement.save();
 
     res.json(statement);
   } catch (error) {
     console.log(error);
-
-    res.status(500).json({
-      message: "Server Error",
-    });
+    res.status(500).json({ message: "Server Error" });
   }
 };
 module.exports = {
@@ -228,4 +260,6 @@ module.exports = {
   updateEmployeeNote,
   updateAccountantNote,
   toggleStatementLock,
+  updateOrderField ,
+  checkStatementLocked
 };

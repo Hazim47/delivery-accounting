@@ -141,9 +141,45 @@ const resetUserPassword = async (req, res) => {
     });
   }
 };
+const updatePermissions = async (req, res) => {
+  try {
+
+    const user = await User.findByPk(
+      req.params.id
+    );
+
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
+
+  user.permissions = req.body.permissions;
+
+console.log(user.permissions);
+
+await user.save();
+
+const again = await User.findByPk(req.params.id);
+
+console.log(again.permissions);
+
+    res.json({
+      message: "Permissions updated",
+    });
+
+  } catch (error) {
+    console.log(error);
+
+    res.status(500).json({
+      message: "Server Error",
+    });
+  }
+};
 module.exports = {
   createUser,
   getUsers,
   deleteUser,
   resetUserPassword,
+  updatePermissions
 };

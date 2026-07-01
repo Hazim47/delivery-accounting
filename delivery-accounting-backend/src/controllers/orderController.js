@@ -92,12 +92,7 @@ const getOrderAudit = async (req, res) => {
 ========================================================= */
 const getOrders = async (req, res) => {
   try {
-    const page = Number(req.query.page) || 1;
-    const limit = Math.min(Number(req.query.limit) || 50, 100);
-    const offset = (page - 1) * limit;
-
-    const { rows, count } = await Order.findAndCountAll({
-      distinct: true,
+    const orders = await Order.findAll({
       include: [
         {
           association: "Restaurant",
@@ -108,18 +103,19 @@ const getOrders = async (req, res) => {
           attributes: ["id", "fullName"],
         },
       ],
-      order: [["createdAt", "DESC"]],
-      limit,
-      offset,
+
+      order: [
+        ["orderDate", "ASC"],
+        ["startTime", "ASC"],
+        ["endTime", "ASC"],
+      ],
     });
 
     res.json({
-      total: count,
-      page,
-      totalPages: Math.ceil(count / limit),
-      data: rows,
+      data: orders,
     });
   } catch (error) {
+    console.log(error);
     res.status(500).json({ message: "Server Error" });
   }
 };
@@ -197,73 +193,78 @@ const updateOrderNotes = async (req, res) => {
       });
     }
 
-    // 🔥 FIX: حماية القفل (100% مضمونة)
-    if (order.ImportLogId) {
-      const statement = await ImportLog.findByPk(order.ImportLogId);
+    // منع التعديل إذا كان الستيتمنت مقفل
+ if (order.ImportLogId) {
+  const statement = await ImportLog.findByPk(order.ImportLogId);
 
-      if (statement?.isLocked === true) {
-        return res.status(403).json({
-          message: "Statement is locked. Editing is not allowed.",
-        });
-      }
-    }
+  if (statement?.isLocked && req.user.role !== "ADMIN") {
+    return res.status(403).json({
+      message: "Statement is locked. Editing is not allowed.",
+    });
+  }
+}
 
-    const role = req.user.role;
     const user = await User.findByPk(req.user.id);
 
-    const fieldPermissions = {
-      EMPLOYEE: [
-        "employeeNote",
-        "customerName",
-        "customerPhone",
-        "invoiceNumber",
-      ],
-      ACCOUNTANT_1: [
-        "accountantNote",
-        "commissionDescription",
-      ],
-      ACCOUNTANT_2: [
-        "accountantNote",
-        "commissionDescription",
-      ],
-      ADMIN: [
-        "employeeNote",
-        "accountantNote",
-        "customerName",
-        "customerPhone",
-        "invoiceNumber",
-        "commissionDescription",
-      ],
-    };
+    if (!user) {
+      return res.status(404).json({
+        message: "User not found",
+      });
+    }
 
-    const allowedFields = fieldPermissions[role] || [];
+    console.log("BODY:", req.body);
+    console.log("ROLE:", user.role);
+    console.log("PERMISSIONS:", user.permissions);
+
+    // الأدمن يستطيع تعديل كل شيء
+    let allowedFields = [];
+
+    if (user.role === "ADMIN") {
+      allowedFields = Object.keys(req.body);
+    } else {
+      allowedFields = Object.keys(user.permissions || {}).filter(
+        (field) => user.permissions[field] === true
+      );
+    }
+
+    console.log("Allowed Fields:", allowedFields);
 
     for (const field of allowedFields) {
-      if (field in req.body) {
-        const oldValue = order[field];
+      if (!(field in req.body)) continue;
 
-        order[field] = req.body[field];
+      const oldValue = order[field];
+      const newValue = req.body[field];
 
-        await createAuditLog({
-          orderId: order.id,
-          user,
-          action: `UPDATE_${field.toUpperCase()}`,
-          field,
-          oldValue,
-          newValue: order[field],
-        });
-      }
+      // إذا القيمة لم تتغير لا تحفظ
+      if (oldValue === newValue) continue;
+
+      order[field] = newValue;
+
+      await createAuditLog({
+        orderId: order.id,
+        user,
+        action: `UPDATE_${field.toUpperCase()}`,
+        field,
+        oldValue,
+        newValue,
+      });
     }
 
     await order.save();
+
+    console.log("ORDER SAVED");
 
     res.json({
       message: "Order updated successfully",
       order,
     });
+
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "Server Error" });
+
+    res.status(500).json({
+      message: "Server Error",
+    });
   }
 };
 

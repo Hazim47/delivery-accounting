@@ -27,7 +27,11 @@ const importOrdersExcel = async (req, res) => {
       workbook.Sheets[
         workbook.SheetNames[0]
       ];
-
+const toNumber = (val) => {
+  if (val === "" || val === null || val === undefined) return 0;
+  const num = Number(val);
+  return isNaN(num) ? 0 : num;
+};
     const rows =
       XLSX.utils.sheet_to_json(sheet);
 console.log("========== EXCEL COLUMNS ==========");
@@ -121,7 +125,9 @@ console.log("===================================");
     const ordersToInsert = [];
 
     for (const row of rows) {
+      console.log(row["التاريخ"], typeof row["التاريخ"]); 
       let orderDate = null;
+
 
 if (row["التاريخ"]) {
   const parts = String(row["التاريخ"])
@@ -129,7 +135,7 @@ if (row["التاريخ"]) {
     .split("/");
 
   if (parts.length === 3) {
-    orderDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+    orderDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00`);
   }
 }
       const orderNumber = String(
@@ -285,8 +291,7 @@ branchName:
 captainPhone:
   row["رقم الهاتف"] || "",
 
-tariff:
-  row["التعرفه"] || "",
+tariff: toNumber(row["التعرفه"]),
 
 customerAreaInput:
   row["منطقه الزبون - ادخال مطعم"] || "",
@@ -294,8 +299,7 @@ customerAreaInput:
 vehicleType:
   row["المركبة"] || "",
 
-distance:
-  row["المسافة"] || "",
+distance: toNumber(row["المسافة"]),
 
 cancelReason:
   row["سبب الالغاء"] || "",
@@ -413,7 +417,7 @@ orderDate,
       driversCreated,
     });
   } catch (error) {
-    await transaction.rollback();
+    console.log("IMPORT ERROR:", error.message);
 
     console.log(error);
 

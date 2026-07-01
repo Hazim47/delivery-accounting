@@ -9,7 +9,8 @@ const {
   createUser,
   getUsers,
   deleteUser,
-  resetUserPassword
+  resetUserPassword,
+  updatePermissions
 } = require("../controllers/userController");
 
 // Get all users
@@ -40,5 +41,11 @@ router.put(
   authMiddleware,
   roleMiddleware("ADMIN"),
   resetUserPassword
+);
+router.put(
+  "/:id/permissions",
+  authMiddleware,
+  roleMiddleware("ADMIN"),
+  updatePermissions
 );
 module.exports = router;

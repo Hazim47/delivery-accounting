@@ -100,7 +100,7 @@ captainPhone: {
 },
 
 tariff: {
-  type: DataTypes.STRING,
+  type: DataTypes.DECIMAL(10,2),
 },
 
 customerAreaInput: {
@@ -113,7 +113,9 @@ vehicleType: {
 employeeNoteBy: {
   type: DataTypes.STRING,
 },
-
+RestaurantId: {
+  type: DataTypes.INTEGER,
+},
 employeeNoteAt: {
   type: DataTypes.DATE,
 },
