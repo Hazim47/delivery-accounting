@@ -14,17 +14,15 @@ import {
 
 function RevenueChart() {
   const [data, setData] = useState([]);
-const { t } = useTranslation();
+  const { t } = useTranslation();
+
   useEffect(() => {
     loadChart();
   }, []);
 
   const loadChart = async () => {
     try {
-      const res = await API.get(
-        "/dashboard/chart"
-      );
-
+      const res = await API.get("/charts/revenue");
       setData(res.data);
     } catch (err) {
       console.log(err);
@@ -32,14 +30,11 @@ const { t } = useTranslation();
   };
 
   return (
-    <ResponsiveContainer
-      width="100%"
-      height={350}
-    >
+    <ResponsiveContainer width="100%" height={350}>
       <LineChart data={data}>
         <CartesianGrid strokeDasharray="3 3" />
 
-        <XAxis dataKey="month" />
+        <XAxis dataKey="date" />
 
         <YAxis />
 
@@ -49,16 +44,16 @@ const { t } = useTranslation();
 
         <Line
           type="monotone"
-          dataKey="revenue"
-          name={t("revenue")}
+          dataKey="sales"
+          name={t("totalSales")}
           stroke="#2563eb"
           strokeWidth={3}
         />
 
         <Line
           type="monotone"
-          dataKey="profit"
-          name={t("profit")}
+          dataKey="tariff"
+          name={t("tariff")}
           stroke="#16a34a"
           strokeWidth={3}
         />

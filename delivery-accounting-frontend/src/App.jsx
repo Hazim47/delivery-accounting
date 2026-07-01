@@ -5,7 +5,9 @@ import MainLayout from "./layouts/MainLayout";
 import ImportOrders from "./pages/ImportOrders";
 import Login from "./pages/Login";
 import Dashboard from "./pages/Dashboard";
+import Restaurants from "./pages/Restaurants";
 import Statements from "./pages/Statements";
+import RestaurantDetails from "./pages/RestaurantDetails";
 import StatementDetails from "./pages/StatementDetails";
 function App() {
   return (
@@ -41,6 +43,18 @@ function App() {
     </ProtectedRoute>
   }
 />
+<Route
+  path="/restaurants"
+  element={
+    <ProtectedRoute
+      roles={["ADMIN", "ACCOUNTANT_1", "ACCOUNTANT_2", "EMPLOYEE"]}
+    >
+      <MainLayout>
+        <Restaurants />
+      </MainLayout>
+    </ProtectedRoute>
+  }
+/>
        <Route
   path="/import-orders"
   element={
@@ -72,6 +86,10 @@ function App() {
       </MainLayout>
     </ProtectedRoute>
   }
+/>
+<Route
+  path="/restaurants/:id"
+  element={<RestaurantDetails />}
 />
 
       </Routes>

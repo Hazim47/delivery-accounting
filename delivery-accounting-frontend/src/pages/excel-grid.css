@@ -62,3 +62,27 @@
   height: 100vh;
   overflow: hidden; /* 🚫 يمنع السكرول داخل الصفحة */
 }
+/* الخلايا القابلة للتعديل */
+
+.editable-cell {
+    background: rgba(0, 99, 174, 0.178) !important;
+}
+
+
+
+/* عنوان العمود */
+
+.editable-header .ag-header-cell-label {
+    color: rgba(0, 99, 174, 0.459) !important;
+    font-weight: bold;
+}
+.ag-cell-focus.editable-cell {
+    border: 2px solid rgb(0, 0, 0) !important;
+    box-shadow: 0 0 8px rgb(0, 99, 174);
+}
+.editable-cell {
+    cursor: text !important;
+}
+.ag-cell:not(.editable-cell) {
+    cursor: default;
+}

@@ -68,11 +68,16 @@ const role = user?.role;
     loadStatements();
   }, [page]);
 const toggleLock = async (statementId) => {
-  try {
-    await API.put(
-      `/statements/${statementId}/toggle-lock`
-    );
+  if (role !== "ADMIN") return;
 
+  const statement = statements.find(s => s.id === statementId);
+
+  if (statement?.isLocked && role !== "ADMIN") {
+    return;
+  }
+
+  try {
+    await API.put(`/statements/${statementId}/toggle-lock`);
     loadStatements();
   } catch (err) {
     console.log(err);

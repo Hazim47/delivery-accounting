@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo, useRef } from "react";
+import { useEffect, useState, useMemo, useRef,useCallback } from "react";
 import { useParams } from "react-router-dom";
 import API from "../api/axios";
 import { useTranslation } from "react-i18next";
@@ -10,65 +10,90 @@ import "./excel-grid.css";
 import {
   Box,
   Paper,
-  Typography,
   TextField,
   Button,
-  CircularProgress,
 } from "@mui/material";
 
 import "ag-grid-community/styles/ag-grid.css";
 import "ag-grid-community/styles/ag-theme-alpine.css";
 
 ModuleRegistry.registerModules([AllCommunityModule]);
+
+const EDITABLE_FIELDS = [
+  "restaurantName",
+  "branchName",
+  "captainName",
+  "captainPhone",
+  "tariff",
+  "customerName",
+  "customerPhone",
+  "customerAddress",
+  "customerAreaInput",
+  "deliveryFee",
+  "orderAmount",
+  "vehicleType",
+  "distance",
+  "invoiceNumber",
+  "companyCommission",
+  "commissionDescription",
+  "cancelReason",
+  "status",
+  "employeeNote",
+  "accountantNote",
+];
+
 function StatementDetails() {
   const { id } = useParams();
-  const updateTimeout = useRef(null);
-  const [exporting, setExporting] = useState(false);
+  const updateTimeouts = useRef({});
   const { t } = useTranslation();
   const searchTimeout = useRef(null);
 const gridRef = useRef();
+const [totalRows, setTotalRows] = useState(0);
 const [isLocked, setIsLocked] = useState(false);
   const [auditOpen, setAuditOpen] = useState(false);
 const [auditLogs, setAuditLogs] = useState([]);
 const [selectedOrderId, setSelectedOrderId] = useState(null);
- const user = JSON.parse(localStorage.getItem("user"));
+ const user = useMemo(() => {
+    return JSON.parse(localStorage.getItem("user"));
+}, []);
 const role = user?.role;
-const [totalRows, setTotalRows] = useState(0);
+const permissions = user?.permissions || {};
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(false);
-
+const isReadOnly = isLocked && role !== "ADMIN";
   const [page, setPage] = useState(0);
   const [pageSize, setPageSize] = useState(1000);
 
   const [search, setSearch] = useState("");
 
-  const loadOrders = async () => {
-    try {
-      setLoading(true);
+const loadOrders = useCallback(async () => {
+  try {
+    setLoading(true);
 
-      const res = await API.get(
-        `/statements/${id}/orders`,
-        {
-          params: {
-            page: page + 1,
-            limit: pageSize,
-            search,
-          },
-        }
-      );
+    const res = await API.get(`/statements/${id}/orders`, {
+      params: {
+        page: page + 1,
+        limit: pageSize,
+        search,
+      },
+    });
 
-      setOrders(res.data.data || []);
-setOrders(res.data.data || []);
-setTotalRows(res.data.total || 0);
+    setOrders(res.data.data || []);
+    setTotalRows(res.data.total || 0);
+    setIsLocked(res.data.isLocked || false);
+  } catch (err) {
+    console.log(err);
+  } finally {
+    setLoading(false);
+  }
+}, [id, page, pageSize, search]);
+const canEdit = (field) => {
+  if (role === "ADMIN") return true;
 
-// إذا عندك isLocked من backend (مهم)
-setIsLocked(res.data.isLocked || false);
-    } catch (err) {
-      console.log(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  if (isLocked) return false;
+
+  return permissions[field] === true;
+};
 const openAudit = async (orderId) => {
   try {
     setSelectedOrderId(orderId);
@@ -85,7 +110,7 @@ const openAudit = async (orderId) => {
 };
 useEffect(() => {
   loadOrders();
-}, [id, page, pageSize]);
+}, [loadOrders]);
 
 useEffect(() => {
   if (searchTimeout.current) {
@@ -94,7 +119,6 @@ useEffect(() => {
 
   searchTimeout.current = setTimeout(() => {
     setPage(0);
-    loadOrders();
   }, 500);
 
   return () => clearTimeout(searchTimeout.current);
@@ -111,209 +135,196 @@ useEffect(() => {
     field: "orderDate",
     headerName: t("date"),
     width: 140,
+    sort: "asc"
   },
 
   {
     field: "startTime",
     headerName: t("startTime"),
     width: 140,
+    sort: "asc"
   },
 
   {
     field: "endTime",
     headerName: t("endTime"),
     width: 140,
+    sort: "asc"
   },
 
-  {
-    field: "restaurantName",
-    headerName: t("restaurant"),
-    width: 220,
-    valueGetter: (p) =>
-      p.data?.restaurantName || p.data?.Restaurant?.name || "-",
-  },
+ {
+  field: "restaurantName",
+  headerName: t("restaurant"),
+  width: 220,
+  editable: () => canEdit("restaurantName"),
+  valueGetter: (p) =>
+    p.data?.restaurantName || p.data?.Restaurant?.name || "-",
+},
 
-  {
-    field: "branchName",
-    headerName: t("branch"),
-    width: 180,
-  },
+{
+  field: "branchName",
+  headerName: t("branch"),
+  width: 180,
+  editable: () => canEdit("branchName"),
+},
 
-  {
-    field: "captainName",
-    headerName: t("captain"),
-    width: 200,
-    valueGetter: (p) =>
-      p.data?.captainName || p.data?.Driver?.fullName || "-",
-  },
+{
+  field: "captainName",
+  headerName: t("captain"),
+  width: 200,
+  editable: () => canEdit("captainName"),
+  valueGetter: (p) =>
+    p.data?.captainName || p.data?.Driver?.fullName || "-",
+},
 
-  {
-    field: "captainPhone",
-    headerName: t("captainPhone"),
-    width: 180,
-  },
+{
+  field: "captainPhone",
+  headerName: t("captainPhone"),
+  width: 180,
+  editable: () =>  canEdit("captainPhone"),
+},
 
-  {
-    field: "tariff",
-    headerName: t("tariff"),
-    width: 120,
-  },
-  {
+{
+  field: "tariff",
+  headerName: t("tariff"),
+  width: 120,
+  editable: () =>canEdit("tariff"),
+},
+
+{
   field: "customerName",
   headerName: t("customerName"),
   width: 200,
-  editable: () => {
-  if (isLocked) return false;
-  return role === "EMPLOYEE" || role === "ADMIN";
-},
+  editable: () =>canEdit("customerName"),
 },
 
 {
   field: "customerPhone",
   headerName: t("customerPhone"),
   width: 180,
-  editable: () => {
-  if (isLocked) return false;
-  return role === "EMPLOYEE" || role === "ADMIN";
-},
+  editable: () => canEdit("customerPhone"),
 },
 
-  {
-    field: "customerAddress",
-    headerName: t("customerAddress"),
-    width: 280,
-  },
+{
+  field: "customerAddress",
+  headerName: t("customerAddress"),
+  width: 280,
+  editable: () => canEdit("customerAddress"),
+},
 
-  {
-    field: "customerAreaInput",
-    headerName: t("customerArea"),
-    width: 180,
-  },
+{
+  field: "customerAreaInput",
+  headerName: t("customerArea"),
+  width: 180,
+  editable: () => canEdit("customerAreaInput"),
+},
 
-  {
-    field: "orderAmount",
-    headerName: t("orderAmount"),
-    width: 130,
-  },
+{
+  field: "orderAmount",
+  headerName: t("orderAmount"),
+  width: 130,
+  editable: () => canEdit("orderAmount"),
+},
 
-  {
-    field: "deliveryFee",
-    headerName: t("deliveryFee"),
-    width: 130,
-  },
-  {
+{
+  field: "deliveryFee",
+  headerName: t("deliveryFee"),
+  width: 130,
+  editable: () =>  canEdit("deliveryFee"),
+},
 
-    field: "vehicleType",
+{
+  field: "vehicleType",
+  headerName: t("vehicleType"),
+  width: 140,
+  editable: () =>canEdit("vehicleType"),
+},
 
-    headerName: t("vehicleType"),
-
-    width: 140,
-
-  },
-
-
-
-  {
-
-    field: "distance",
-
-    headerName: t("distance"),
-
-    width: 120,
-
-  },
-
-
+{
+  field: "distance",
+  headerName: t("distance"),
+  width: 120,
+  editable: () =>  canEdit("distance"),
+},
 
 {
   field: "invoiceNumber",
   headerName: t("invoiceNumber"),
   width: 180,
- editable: () => {
-  if (isLocked) return false;
-  return role === "EMPLOYEE" || role === "ADMIN";
-},
+  editable: () =>  canEdit("invoiceNumber"),
 },
 
-
-
-  {
-
-    field: "companyCommission",
-
-    headerName: t("commission"),
-
-    width: 140,
-
-  },
-
-
+{
+  field: "companyCommission",
+  headerName: t("commission"),
+  width: 140,
+  editable: () => canEdit("companyCommission"),
+},
 
 {
   field: "commissionDescription",
   headerName: t("commissionDescription"),
   width: 250,
-  editable: () =>
-    role === "ACCOUNTANT_1" ||
-    role === "ACCOUNTANT_2" ||
-    role === "ADMIN",
+  editable: () => canEdit("commissionDescription"),
 },
-  {
-    field: "cancelReason",
-    headerName: t("cancelReason"),
-    width: 220,
+
+{
+  field: "cancelReason",
+  headerName: t("cancelReason"),
+  width: 220,
+  editable: () =>  canEdit("cancelReason"),
+},
+
+{
+  field: "status",
+  headerName: t("status"),
+  width: 170,
+  editable: () => canEdit("status"),
+  cellRenderer: (params) => {
+    const status = params.value;
+
+    const colors = {
+      PENDING: "#f59e0b",
+      PREPARING: "#06b6d4",
+      ON_THE_WAY: "#6366f1",
+      DELIVERED: "#22c55e",
+      CANCELLED: "#ef4444",
+    };
+
+    const translatedStatus =
+      status === "PENDING"
+        ? t("pending")
+        : status === "PREPARING"
+        ? t("preparing")
+        : status === "ON_THE_WAY"
+        ? t("onTheWay")
+        : status === "DELIVERED"
+        ? t("delivered")
+        : status === "CANCELLED"
+        ? t("cancelled")
+        : status;
+
+    return (
+      <span
+        style={{
+          padding: "6px 12px",
+          borderRadius: "20px",
+          color: "#fff",
+          fontWeight: "bold",
+          background: colors[status] || "#64748b",
+        }}
+      >
+        {translatedStatus}
+      </span>
+    );
   },
-
-  {
-    field: "status",
-    headerName: t("status"),
-    width: 170,
-    cellRenderer: (params) => {
-      const status = params.value;
-
-      const colors = {
-        PENDING: "#f59e0b",
-        PREPARING: "#06b6d4",
-        ON_THE_WAY: "#6366f1",
-        DELIVERED: "#22c55e",
-        CANCELLED: "#ef4444",
-      };
-
-      const translatedStatus =
-        status === "PENDING"
-          ? t("pending")
-          : status === "PREPARING"
-          ? t("preparing")
-          : status === "ON_THE_WAY"
-          ? t("onTheWay")
-          : status === "DELIVERED"
-          ? t("delivered")
-          : status === "CANCELLED"
-          ? t("cancelled")
-          : status;
-
-      return (
-        <span
-          style={{
-            padding: "6px 12px",
-            borderRadius: "20px",
-            color: "#fff",
-            fontWeight: "bold",
-            background: colors[status] || "#64748b",
-          }}
-        >
-          {translatedStatus}
-        </span>
-      );
-    },
-  },
+},
 
 {
   field: "employeeNote",
   headerName: t("employeeNote"),
   width: 300,
-  editable: () => role === "EMPLOYEE" || role === "ADMIN",
-
+  editable: () => canEdit("employeeNote"),
   cellEditor: "agLargeTextCellEditor",
   cellEditorPopup: true,
   cellEditorParams: {
@@ -323,15 +334,11 @@ useEffect(() => {
   },
 },
 
- {
+{
   field: "accountantNote",
   headerName: t("accountantNote"),
   width: 300,
-  editable: () =>
-    role === "ACCOUNTANT_1" ||
-    role === "ACCOUNTANT_2" ||
-    role === "ADMIN",
-
+  editable: () =>canEdit("accountantNote"),
   cellEditor: "agLargeTextCellEditor",
   cellEditorPopup: true,
   cellEditorParams: {
@@ -365,7 +372,7 @@ useEffect(() => {
         },
       ]
     : []),
-], [role, t]);
+],[role, t, permissions, isLocked]);
 useEffect(() => {
   document.body.style.overflow = "hidden";
 
@@ -536,7 +543,7 @@ return (
 
         <Button
           variant="contained"
-          onClick={() => setPage(0)}
+          onClick={loadOrders}
           sx={{
             px: 4,
             borderRadius: "14px",
@@ -593,57 +600,91 @@ return (
   columnDefs={columnDefs}
   loading={loading}
   pagination={true}
-  suppressClickEdit={isLocked}
-singleClickEdit={!isLocked}
   paginationPageSize={pageSize}
   domLayout="normal"
+enterMovesDown={false}
+enterMovesRight={false}
   rowSelection="multiple"
   rowMultiSelectWithClick={true}
   enableCellTextSelection={true}
   animateRows={false}
-
+  readOnlyEdit={isReadOnly}
+  singleClickEdit={!isReadOnly}
+  suppressClickEdit={isReadOnly}
+  suppressCellSelection={isReadOnly}
   className="excel-grid ag-theme-alpine"   // 🔥 هذا أهم سطر
 
-  defaultColDef={{
+defaultColDef={{
   sortable: true,
   filter: true,
-  minWidth: 180, 
   resizable: true,
   floatingFilter: true,
   minWidth: 140,
   autoHeight: false,
   wrapText: false,
+
+  headerClass: (params) => {
+    const editable =
+      typeof params.colDef.editable === "function"
+        ? params.colDef.editable(params)
+        : params.colDef.editable;
+
+    return editable ? "editable-header" : "";
+  },
+
+  cellClass: (params) => {
+    const editable =
+      typeof params.colDef.editable === "function"
+        ? params.colDef.editable(params)
+        : params.colDef.editable;
+
+    return editable ? "editable-cell" : "";
+  },
+}}
+onCellKeyDown={(params) => {
+    if (isReadOnly) {
+      params.api.stopEditing(true);
+    }
+  }}
+
+  onCellDoubleClicked={(params) => {
+   if (isReadOnly) {
+      params.api.stopEditing(true);
+    }
+  }}
+suppressKeyboardEvent={() => {
+  return isReadOnly;
+}}
+
+onPasteStart={(params) => {
+  if (isReadOnly) return false;
 }}
 
 onCellValueChanged={async (params) => {
-  if (updateTimeout.current)
-    clearTimeout(updateTimeout.current);
+   if (isReadOnly) return;
+const orderId = params.data.id;
 
-  updateTimeout.current = setTimeout(async () => {
+if (updateTimeouts.current[orderId]) {
+  clearTimeout(updateTimeouts.current[orderId]);
+}
+
+updateTimeouts.current[orderId] = setTimeout(async () => {
     try {
-
-      const editableFields = [
-        "employeeNote",
-        "accountantNote",
-        "customerName",
-        "customerPhone",
-        "invoiceNumber",
-        "commissionDescription",
-      ];
-
       const field = params.colDef.field;
 
-      if (!editableFields.includes(field)) return;
+      if (!EDITABLE_FIELDS.includes(field)) return;
 
       const payload = {
         [field]: params.newValue,
       };
 
       await API.put(`/orders/${params.data.id}/notes`, payload);
-
     } catch (err) {
       console.log(err);
     }
+    finally {
+  delete updateTimeouts.current[orderId];
+}
   }, 400);
 }}
         />
