@@ -6,7 +6,7 @@ import { AgGridReact } from "ag-grid-react";
 import { ModuleRegistry, AllCommunityModule } from "ag-grid-community";
 import { Dialog, DialogTitle, DialogContent } from "@mui/material";
 import "./excel-grid.css";
-
+import QRCode from "qrcode";
 import {
   Box,
   Paper,
@@ -40,6 +40,11 @@ const EDITABLE_FIELDS = [
   "status",
   "employeeNote",
   "accountantNote",
+  "externalOrderId",
+"orderDate",
+"startTime",
+"endTime",
+"accountingCompensation",
 ];
 
 function StatementDetails() {
@@ -65,7 +70,14 @@ const isReadOnly = isLocked && role !== "ADMIN";
   const [pageSize, setPageSize] = useState(1000);
 
   const [search, setSearch] = useState("");
-
+const addRow = async () => {
+  try {
+    await API.post(`/statements/${id}/orders`);
+    loadOrders();
+  } catch (err) {
+    console.log(err);
+  }
+};
 const loadOrders = useCallback(async () => {
   try {
     setLoading(true);
@@ -129,27 +141,31 @@ useEffect(() => {
     headerName: t("orderNumber"),
     width: 160,
     pinned: "left",
+    editable: () => canEdit("externalOrderId"),
   },
 
   {
     field: "orderDate",
     headerName: t("date"),
     width: 140,
-    sort: "asc"
+    sort: "asc",
+    editable: () => canEdit("orderDate"),
   },
 
   {
     field: "startTime",
     headerName: t("startTime"),
     width: 140,
-    sort: "asc"
+    sort: "asc",
+    editable: () => canEdit("startTime"),
   },
 
   {
     field: "endTime",
     headerName: t("endTime"),
     width: 140,
-    sort: "asc"
+    sort: "asc",
+    editable: () => canEdit("endTime"),
   },
 
  {
@@ -210,6 +226,28 @@ useEffect(() => {
   headerName: t("customerAddress"),
   width: 280,
   editable: () => canEdit("customerAddress"),
+
+  cellClassRules: {
+    "bg-red-cell": (params) => {
+      return (
+        params.data?.customerAddress &&
+        params.data?.customerAreaInput &&
+        params.data.customerAddress.trim() !==
+          params.data.customerAreaInput.trim()
+      );
+    },
+  },
+
+  valueFormatter: (params) => {
+    const addr = params.value;
+    const area = params.data?.customerAreaInput;
+
+    if (addr && area && addr.trim() !== area.trim()) {
+      return `⚠ ${addr}`;
+    }
+
+    return addr || "-";
+  },
 },
 
 {
@@ -345,7 +383,14 @@ useEffect(() => {
     rows: 6,
   },
 },
-
+{
+  field: "accountingCompensation",
+  headerName: t("accountingCompensation"),
+  width: 170,
+  editable: () => canEdit("accountingCompensation"),
+  valueFormatter: (params) =>
+    Number(params.value || 0).toFixed(2),
+},
   ...(role === "ADMIN"
     ? [
         {
@@ -380,7 +425,8 @@ useEffect(() => {
     document.body.style.overflow = "auto";
   };
 }, []);
-const printSelectedRows = () => {
+
+const printSelectedRows = async () => {
   const api = gridRef.current?.api;
   const selectedRows = api.getSelectedRows();
 
@@ -389,101 +435,211 @@ const printSelectedRows = () => {
     return;
   }
 
-  const columns = columnDefs.filter(col => col.field);
-
   const printWindow = window.open("", "_blank");
 
-  // 👇 بدل تقسيم صفحات → تقسيم مجموعات عرض
-  const chunkSize = 10;
-  const chunks = [];
+  const htmlCards = await Promise.all(
+    selectedRows.map(async (row, index) => {
+      const qr = await QRCode.toDataURL(
+        `ORDER:${row.externalOrderId || "-"}`
+      );
 
-  for (let i = 0; i < columns.length; i += chunkSize) {
-    chunks.push(columns.slice(i, i + chunkSize));
-  }
+      return `
+        <div class="page">
 
-  const tablesHtml = chunks.map((chunkCols, index) => {
+          <!-- HEADER ERP -->
+          <div class="header">
+            <div>
+              <div class="system"> OFFERATS SYSTEM</div>
+              <div class="meta">Statement Report</div>
+            </div>
 
-    const headers = chunkCols.map(col => `
-      <th>${col.headerName}</th>
-    `).join("");
+            <div class="order-box">
+              <div>Order #</div>
+              <div class="order-id">${row.externalOrderId || "-"}</div>
+            </div>
+          </div>
 
-    const rows = selectedRows.map(row => `
-      <tr>
-        ${chunkCols.map(col => `
-          <td>${row[col.field] ?? "-"}</td>
-        `).join("")}
-      </tr>
-    `).join("");
+          <div class="line"></div>
 
-    return `
-      <div class="table-block">
-        <h3>جزء ${index + 1}</h3>
+          <!-- BODY -->
+          <div class="content">
 
-        <table>
-          <thead>
-            <tr>${headers}</tr>
-          </thead>
-          <tbody>
-            ${rows}
-          </tbody>
-        </table>
-      </div>
-    `;
-  }).join("");
+            <div class="grid">
+
+              ${columnDefs
+                .filter(col => col.field)
+                .map(col => {
+                  const value = row[col.field];
+
+                  return `
+                    <div class="item">
+                      <div class="label">${col.headerName}</div>
+                      <div class="value">${value ?? "-"}</div>
+                    </div>
+                  `;
+                })
+                .join("")}
+
+            </div>
+
+            <!-- QR + STATUS -->
+            <div class="bottom">
+              <img class="qr" src="${qr}" />
+
+            </div>
+
+          </div>
+        </div>
+      `;
+    })
+  );
 
   printWindow.document.write(`
     <html>
       <head>
-        <title>Print</title>
+        <title>Offerat Order Print</title>
 
         <style>
+
           body {
+            margin: 0;
+            padding: 0;
             font-family: Arial;
+            background: #eee;
             direction: rtl;
+          }
+
+          /* PAGE (A4 STYLE) */
+          .page {
+            width: 210mm;
+            min-height: 297mm;
+            margin: auto;
+            background: white;
             padding: 20px;
+            box-sizing: border-box;
+            page-break-after: always;
           }
 
-          .table-block {
-            margin-bottom: 30px;
-            page-break-inside: avoid;
+          /* HEADER */
+          .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
           }
 
-          h3 {
-            text-align: center;
-            margin: 10px 0;
+          .system {
+            font-size: 18px;
+            font-weight: 900;
+            color: #111;
+            letter-spacing: 1px;
           }
 
-          table {
-            width: 100%;
-            border-collapse: collapse;
+          .meta {
+            font-size: 12px;
+            color: #777;
+          }
+
+          .order-box {
+            text-align: left;
+            border: 1px solid #ddd;
+            padding: 8px 12px;
+            border-radius: 8px;
+          }
+
+          .order-id {
+            font-weight: 900;
+            font-size: 16px;
+            color: #000;
+          }
+
+          .line {
+            height: 2px;
+            background: linear-gradient(to right, #facc15, #f59e0b);
+            margin: 15px 0;
+          }
+
+          /* GRID */
+          .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+          }
+
+          .item {
+            background: #fafafa;
+            border: 1px solid #eee;
+            padding: 10px;
+            border-radius: 10px;
+          }
+
+          .label {
             font-size: 11px;
+            color: #777;
           }
 
-          th, td {
-            border: 1px solid #000;
-            padding: 5px;
-            text-align: center;
+          .value {
+            font-size: 13px;
+            font-weight: 700;
+            margin-top: 4px;
           }
 
-          th {
-            background: #f2f2f2;
+          /* BOTTOM */
+          .bottom {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 20px;
+          }
+
+          .qr {
+            width: 90px;
+            height: 90px;
+          }
+
+          /* STATUS */
+          .status {
+            padding: 8px 14px;
+            border-radius: 20px;
+            font-weight: bold;
+            color: white;
+            font-size: 12px;
+          }
+
+          .status-PENDING { background: #f59e0b; }
+          .status-PREPARING { background: #06b6d4; }
+          .status-ON_THE_WAY { background: #6366f1; }
+          .status-DELIVERED { background: #22c55e; }
+          .status-CANCELLED { background: #ef4444; }
+
+          /* FOOTER */
+          .footer {
+            position: absolute;
+            bottom: 15px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            font-size: 10px;
+            color: #999;
           }
 
           @media print {
-            .table-block {
-              page-break-inside: avoid;
+            body {
+              background: white;
             }
           }
+
         </style>
       </head>
 
       <body>
-        ${tablesHtml}
+        ${htmlCards.join("")}
       </body>
     </html>
   `);
 
   printWindow.document.close();
+  printWindow.print();
 };
 
 return (
@@ -544,7 +700,23 @@ return (
         <Button
           variant="contained"
           onClick={loadOrders}
-          sx={{
+       sx={btnStyle}
+        >
+          {t("searchButton")}
+        </Button>
+        {role === "ADMIN" && (
+  <Button
+    variant="contained"
+    onClick={addRow}
+       sx={btnStyle}
+  >
+   {t("addRow")}
+  </Button>
+)}
+<Button
+  variant="contained"
+  onClick={printSelectedRows}
+     sx={{
             px: 4,
             borderRadius: "14px",
             fontWeight: 900,
@@ -556,14 +728,8 @@ return (
               transform: "scale(1.03)",
             },
           }}
-        >
-          {t("searchButton")}
-        </Button>
-<Button
-  variant="contained"
-  onClick={printSelectedRows}
 >
-  Print
+  {t("print")}
 </Button>
       </Box>
     </Paper>
@@ -746,6 +912,17 @@ updateTimeouts.current[orderId] = setTimeout(async () => {
   </Box>
 );
 }
-
+const btnStyle = {
+  px: 4,
+  borderRadius: "14px",
+  fontWeight: 900,
+  textTransform: "none",
+  color: "#000",
+  background: "linear-gradient(135deg,#facc15,#f59e0b)",
+  boxShadow: "0 10px 25px rgba(250,204,21,.2)",
+  "&:hover": {
+    transform: "scale(1.03)",
+  },
+};
 export default StatementDetails;
 

@@ -375,3 +375,29 @@
   left: 100%;
 }
 
+.archive-float-btn {
+  position: absolute;
+  bottom: 80px;
+  right: 15px;
+
+  background: linear-gradient(135deg, #f5c542, #d4a72c);
+  color: black;
+
+  border: none;
+  padding: 12px 14px;
+  border-radius: 12px;
+
+  font-weight: bold;
+  cursor: pointer;
+
+  box-shadow: 0 5px 15px rgba(245, 197, 66, 0.3);
+
+  transition: 0.3s;
+}
+
+.archive-float-btn:hover {
+  transform: scale(1.05);
+}
+.sidebar {
+  position: relative;
+}

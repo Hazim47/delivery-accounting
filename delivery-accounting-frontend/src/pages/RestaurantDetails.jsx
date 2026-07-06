@@ -6,7 +6,7 @@ import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFnsV2";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
 import enGB from "date-fns/locale/en-GB";
-
+import { useTranslation } from "react-i18next";
 import {
   Box,
   Typography,
@@ -28,7 +28,7 @@ import SearchIcon from "@mui/icons-material/Search";
 
 function RestaurantDetails() {
   const { id } = useParams();
-
+  const { t } = useTranslation();
   const [restaurant, setRestaurant] = useState(null);
   const [stats, setStats] = useState(null);
   const [orders, setOrders] = useState([]);
@@ -72,7 +72,7 @@ useEffect(() => {
 
 const handleSearch = async () => {
   if (fromDate && toDate && fromDate > toDate) {
-    alert("تاريخ البداية يجب أن يكون قبل تاريخ النهاية");
+    alert(t("invalidDateRange"));
     return;
   }
 
@@ -169,7 +169,7 @@ return (
               fontSize: 16,
             }}
           >
-            متابعة الطلبات والإحصائيات الخاصة بالمطعم
+           {t("restaurantDetailsSubtitle")}
           </Typography>
         </Box>
 
@@ -189,7 +189,7 @@ return (
           }}
         >
           <Typography fontWeight={700}>
-            Restaurant Dashboard
+            {t("restaurantDashboard")}
           </Typography>
 
           <Typography
@@ -204,200 +204,216 @@ return (
 
     {/* ================= FILTER CARD ================= */}
 
-    <Paper
-      elevation={0}
-      sx={{
-        p: 4,
-        mb: 4,
-        borderRadius: "28px",
-        background:
-          "linear-gradient(145deg,rgba(255,255,255,.04),rgba(255,255,255,.02))",
-        backdropFilter: "blur(25px)",
-        border: "1px solid rgba(250,204,21,.12)",
-        boxShadow:
-          "0 25px 50px rgba(0,0,0,.45)",
-      }}
+   <Paper
+  elevation={0}
+  sx={{
+    p: 4,
+    mb: 4,
+    borderRadius: "30px",
+    background:
+      "linear-gradient(145deg,rgba(255,255,255,.05),rgba(255,255,255,.02))",
+    backdropFilter: "blur(30px)",
+    border: "1px solid rgba(250,204,21,.15)",
+    boxShadow: "0 25px 60px rgba(0,0,0,.45)",
+  }}
+>
+  <Typography
+    variant="h6"
+    sx={{
+      mb: 4,
+      color: "#fde047",
+      fontWeight: 900,
+      display: "flex",
+      alignItems: "center",
+      gap: 1,
+      letterSpacing: ".5px",
+    }}
+  >
+    <SearchIcon />
+    {t("searchByDate")}
+  </Typography>
+
+  <Grid
+    container
+    spacing={3}
+    alignItems="stretch"
+  >
+    <LocalizationProvider
+      dateAdapter={AdapterDateFns}
+      adapterLocale={enGB}
     >
-      <Typography
-        variant="h6"
+      {/* FROM */}
+
+      <Grid item xs={12} md={4}>
+        <Typography
+          sx={{
+            mb: 1,
+            color: "#facc15",
+            fontWeight: 700,
+          }}
+        >
+          {t("fromDate")}
+        </Typography>
+
+        <DatePicker
+          format="dd/MM/yyyy"
+          value={fromDate}
+          onChange={(date) => setFromDate(date)}
+          slotProps={{
+            textField: {
+              fullWidth: true,
+
+              sx: {
+                "& .MuiOutlinedInput-root": {
+                  height: 58,
+                  borderRadius: "18px",
+                  background: "rgba(255,255,255,.04)",
+
+                  "& fieldset": {
+                    borderColor: "rgba(250,204,21,.25)",
+                  },
+
+                  "&:hover fieldset": {
+                    borderColor: "#facc15",
+                  },
+
+                  "&.Mui-focused fieldset": {
+                    borderColor: "#facc15",
+                    borderWidth: 2,
+                  },
+                },
+
+                "& .MuiInputBase-input": {
+                  color: "#fff",
+                },
+
+                "& .MuiSvgIcon-root": {
+                  color: "#facc15",
+                },
+
+                "& .MuiPickersSectionList-root": {
+                  color: "#fff",
+                },
+              },
+            },
+          }}
+        />
+      </Grid>
+
+      {/* TO */}
+
+      <Grid item xs={12} md={4}>
+        <Typography
+          sx={{
+            mb: 1,
+            color: "#facc15",
+            fontWeight: 700,
+          }}
+        >
+          {t("toDate")}
+        </Typography>
+
+        <DatePicker
+          format="dd/MM/yyyy"
+          value={toDate}
+          onChange={(date) => setToDate(date)}
+          slotProps={{
+            textField: {
+              fullWidth: true,
+
+              sx: {
+                "& .MuiOutlinedInput-root": {
+                  height: 58,
+                  borderRadius: "18px",
+                  background: "rgba(255,255,255,.04)",
+
+                  "& fieldset": {
+                    borderColor: "rgba(250,204,21,.25)",
+                  },
+
+                  "&:hover fieldset": {
+                    borderColor: "#facc15",
+                  },
+
+                  "&.Mui-focused fieldset": {
+                    borderColor: "#facc15",
+                    borderWidth: 2,
+                  },
+                },
+
+                "& .MuiInputBase-input": {
+                  color: "#fff",
+                },
+
+                "& .MuiSvgIcon-root": {
+                  color: "#facc15",
+                },
+
+                "& .MuiPickersSectionList-root": {
+                  color: "#fff",
+                },
+              },
+            },
+          }}
+        />
+      </Grid>
+    </LocalizationProvider>
+
+    {/* SEARCH */}
+
+    <Grid item xs={12} md={4}>
+      <Paper
+        elevation={0}
         sx={{
-          mb: 3,
-          color: "#fde047",
-          fontWeight: 900,
+          height: "100%",
+          display: "flex",
+          alignItems: "flex-end",
+          justifyContent: "center",
+          background: "rgba(255,255,255,.03)",
+          border: "1px solid rgba(250,204,21,.12)",
+          borderRadius: "20px",
+          p: 2,
         }}
       >
-        🔍 البحث حسب التاريخ
-      </Typography>
+        <Button
+          fullWidth
+          startIcon={<SearchIcon sx={{ fontSize: 28 }} />}
+          onClick={handleSearch}
+          sx={{
+            height: 58,
+            borderRadius: "18px",
 
-      <Grid container spacing={3} alignItems="end">
+            fontWeight: 900,
+            fontSize: 17,
+            letterSpacing: ".4px",
 
-        <LocalizationProvider
-          dateAdapter={AdapterDateFns}
-          adapterLocale={enGB}
-        >
-          {/* FROM */}
+            color: "#000",
 
-          <Grid item xs={12} md={4}>
+            background:
+              "linear-gradient(135deg,#fde047,#facc15,#f59e0b)",
 
-            <Typography
-              sx={{
-                mb: 1,
-                color: "#facc15",
-                fontWeight: 700,
-              }}
-            >
-              من تاريخ
-            </Typography>
+            boxShadow:
+              "0 15px 35px rgba(250,204,21,.35)",
 
-            <DatePicker
-              format="dd/MM/yyyy"
-              value={fromDate}
-              onChange={(date) => setFromDate(date)}
-              slotProps={{
-                textField: {
-                  fullWidth: true,
+            transition: ".35s",
 
-                  sx: {
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: "16px",
-                      background:
-                        "rgba(255,255,255,.03)",
-
-                      "& fieldset": {
-                        borderColor:
-                          "rgba(250,204,21,.3)",
-                      },
-
-                      "&:hover fieldset": {
-                        borderColor: "#facc15",
-                      },
-
-                      "&.Mui-focused fieldset": {
-                        borderColor: "#facc15",
-                        borderWidth: 2,
-                      },
-                    },
-
-                    "& .MuiInputBase-input": {
-                      color: "#fff",
-                    },
-
-                    "& .MuiSvgIcon-root": {
-                      color: "#facc15",
-                    },
-
-                    "& .MuiPickersSectionList-root": {
-                      color: "#fff",
-                    },
-                  },
-                },
-              }}
-            />
-
-          </Grid>
-
-          {/* TO */}
-
-          <Grid item xs={12} md={4}>
-
-            <Typography
-              sx={{
-                mb: 1,
-                color: "#facc15",
-                fontWeight: 700,
-              }}
-            >
-              إلى تاريخ
-            </Typography>
-
-            <DatePicker
-              format="dd/MM/yyyy"
-              value={toDate}
-              onChange={(date) => setToDate(date)}
-              slotProps={{
-                textField: {
-                  fullWidth: true,
-
-                  sx: {
-                    "& .MuiOutlinedInput-root": {
-                      borderRadius: "16px",
-                      background:
-                        "rgba(255,255,255,.03)",
-
-                      "& fieldset": {
-                        borderColor:
-                          "rgba(250,204,21,.3)",
-                      },
-
-                      "&:hover fieldset": {
-                        borderColor: "#facc15",
-                      },
-
-                      "&.Mui-focused fieldset": {
-                        borderColor: "#facc15",
-                        borderWidth: 2,
-                      },
-                    },
-
-                    "& .MuiInputBase-input": {
-                      color: "#fff",
-                    },
-
-                    "& .MuiSvgIcon-root": {
-                      color: "#facc15",
-                    },
-
-                    "& .MuiPickersSectionList-root": {
-                      color: "#fff",
-                    },
-                  },
-                },
-              }}
-            />
-
-          </Grid>
-
-        </LocalizationProvider>
-
-        {/* SEARCH */}
-
-        <Grid item xs={12} md={4}>
-
-          <Button
-            fullWidth
-            size="large"
-            startIcon={<SearchIcon />}
-            onClick={handleSearch}
-            sx={{
-              height: 56,
-              borderRadius: "16px",
-              fontWeight: 900,
-              fontSize: 15,
-              textTransform: "none",
-              color: "#000",
-
-              background:
-                "linear-gradient(135deg,#fde047,#facc15,#f59e0b)",
-
+            "&:hover": {
+              transform: "translateY(-4px) scale(1.03)",
               boxShadow:
-                "0 15px 35px rgba(250,204,21,.25)",
+                "0 25px 55px rgba(250,204,21,.45)",
+            },
 
-              transition: ".3s",
-
-              "&:hover": {
-                transform: "translateY(-3px)",
-                boxShadow:
-                  "0 25px 50px rgba(250,204,21,.35)",
-              },
-            }}
-          >
-            بحث
-          </Button>
-
-        </Grid>
-
-      </Grid>
-    </Paper>
+            "&:active": {
+              transform: "scale(.98)",
+            },
+          }}
+        >
+          {t("search")}
+        </Button>
+      </Paper>
+    </Grid>
+  </Grid>
+</Paper>
         {/* ================= PREMIUM STATS ================= */}
 
     <Grid container spacing={3} sx={{ mb: 5 }}>
@@ -427,7 +443,7 @@ return (
               mb: 1,
             }}
           >
-            📦 عدد الطلبات
+            📦 {t("totalOrders")}
           </Typography>
 
           <Typography
@@ -446,7 +462,7 @@ return (
               color: "#9ca3af",
             }}
           >
-            مجموع الطلبات خلال الفترة المحددة
+           {t("ordersDuringPeriod")}
           </Typography>
         </Paper>
       </Grid>
@@ -477,7 +493,7 @@ return (
               mb: 1,
             }}
           >
-            💰 إجمالي المبيعات
+            💰 {t("totalSales")}
           </Typography>
 
           <Typography
@@ -496,7 +512,7 @@ return (
               color: "#9ca3af",
             }}
           >
-            قيمة جميع الطلبات المسلمة
+           {t("deliveredOrdersValue")}
           </Typography>
         </Paper>
       </Grid>
@@ -527,7 +543,7 @@ return (
               mb: 1,
             }}
           >
-            🏪 التعرفة
+             🏪 {t("tariff")}
           </Typography>
 
           <Typography
@@ -546,10 +562,53 @@ return (
               color: "#9ca3af",
             }}
           >
-            مجموع تعرفة الشركة
+           {t("companyTariffTotal")}
           </Typography>
         </Paper>
       </Grid>
+      <Grid item xs={12} md={4}>
+  <Paper
+    elevation={0}
+    sx={{
+      p: 3,
+      height: "100%",
+      borderRadius: "24px",
+      background:
+        "linear-gradient(145deg,rgba(168,85,247,.15),rgba(255,255,255,.04))",
+      border: "1px solid rgba(168,85,247,.25)",
+      backdropFilter: "blur(18px)",
+    }}
+  >
+    <Typography
+      sx={{
+        color: "#d8b4fe",
+        fontWeight: 700,
+        mb: 1,
+      }}
+    >
+     💵 {t("accountingCompensation")}
+    </Typography>
+
+    <Typography
+      sx={{
+        fontSize: 34,
+        fontWeight: 900,
+        color: "#fff",
+      }}
+    >
+      {Number(stats.totalAccountingCompensation || 0).toFixed(2)} JD
+    </Typography>
+
+    <Typography
+      sx={{
+        mt: 1,
+        color: "#9ca3af",
+      }}
+    >
+     {t("totalAccountingCompensation")}
+    </Typography>
+  </Paper>
+</Grid>
     </Grid>
 
     {/* ================= ORDERS TABLE ================= */}
@@ -582,7 +641,7 @@ return (
                   py: 2.5,
                 }}
               >
-                التاريخ
+               {t("date")}
               </TableCell>
 
               <TableCell
@@ -591,7 +650,7 @@ return (
                   fontWeight: 900,
                 }}
               >
-                الزبون
+               {t("customer")}
               </TableCell>
 
               <TableCell
@@ -600,7 +659,7 @@ return (
                   fontWeight: 900,
                 }}
               >
-                الكابتن
+               {t("captain")}
               </TableCell>
 
               <TableCell
@@ -609,7 +668,7 @@ return (
                   fontWeight: 900,
                 }}
               >
-                قيمة الطلب
+               {t("orderAmount")}
               </TableCell>
 
               <TableCell
@@ -618,8 +677,16 @@ return (
                   fontWeight: 900,
                 }}
               >
-                التعرفة
+               {t("tariff")}
               </TableCell>
+              <TableCell
+  sx={{
+    color: "#fde047",
+    fontWeight: 900,
+  }}
+>
+ {t("accountingCompensation")}
+</TableCell>
 
               <TableCell
                 sx={{
@@ -627,7 +694,7 @@ return (
                   fontWeight: 900,
                 }}
               >
-                الحالة
+                {t("status")}
               </TableCell>
             </TableRow>
           </TableHead>
@@ -637,7 +704,7 @@ return (
                     {orders.length === 0 ? (
             <TableRow>
               <TableCell
-                colSpan={6}
+                colSpan={7}
                 align="center"
                 sx={{
                   py: 8,
@@ -646,7 +713,7 @@ return (
                   fontWeight: 600,
                 }}
               >
-                لا توجد طلبات خلال الفترة المحددة
+               {t("noOrdersDuringPeriod")}
               </TableCell>
             </TableRow>
           ) : (
@@ -712,10 +779,29 @@ return (
                 >
                   {Number(order.tariff || 0).toFixed(2)} JD
                 </TableCell>
-
+                 <TableCell
+  sx={{
+    fontWeight: 800,
+    color: "#c084fc",
+  }}
+>
+  {Number(order.accountingCompensation || 0).toFixed(2)} JD
+</TableCell>
                 <TableCell>
                   <Chip
-                    label={order.status}
+                    label={
+  order.status === "PENDING"
+    ? t("pending")
+    : order.status === "PREPARING"
+    ? t("preparing")
+    : order.status === "ON_THE_WAY"
+    ? t("onTheWay")
+    : order.status === "DELIVERED"
+    ? t("delivered")
+    : order.status === "CANCELLED"
+    ? t("cancelled")
+    : order.status
+}
                     size="small"
                     sx={{
                       minWidth: 110,

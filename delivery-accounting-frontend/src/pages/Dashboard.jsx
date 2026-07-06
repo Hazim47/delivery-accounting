@@ -12,7 +12,7 @@ import ReceiptIcon from "@mui/icons-material/Receipt";
 import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
 import LocalShippingIcon from "@mui/icons-material/LocalShipping";
 import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
-
+import SavingsIcon from "@mui/icons-material/Savings";
 import {
   Box,
   Button,
@@ -20,15 +20,15 @@ import {
 } from "@mui/material";
 
 import "./Dashboard.css";
-const user = JSON.parse(
-  localStorage.getItem("user")
-);
 function Dashboard() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 const { t } = useTranslation();
 const [resetKey, setResetKey] = useState(0);
+const [user] = useState(() => {
+  return JSON.parse(localStorage.getItem("user") || "null");
+});
 const fetchDashboard = async () => {
   try {
     setLoading(true);
@@ -123,6 +123,11 @@ return (
         value={stats?.totalRestaurants || 0}
         icon={<RestaurantIcon />}
       />
+      <StatCard
+         title={t("accountingCompensation")}
+         value={`${Number(stats?.totalAccountingCompensation || 0).toFixed(2)} JD`}
+         icon={<SavingsIcon />}
+/>
     </div>
 
     {/* CHART */}

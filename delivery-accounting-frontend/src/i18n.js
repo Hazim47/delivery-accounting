@@ -23,6 +23,9 @@ i18n.use(initReactI18next).init({
         password: "Password",
         login: "Login",
         loginFailed: "Login Failed",
+          search: "Search",
+  addRow: "Add Row",
+  print: "Print",
         welcome: "Welcome",
 driversDashboard: "Drivers Dashboard",
 addDriver: "Add Driver",
@@ -146,10 +149,29 @@ exportPdf: "Export PDF",
 amount: "Amount",
 note: "Note",
 date: "Date",
-
+accountingCompensation: "Accounting Compensation",
 noDataFound: "No Data Found",
 noPayments: "No Payments",
+restaurantDashboard: "Restaurant Dashboard",
+restaurantDetailsSubtitle: "Track restaurant orders and statistics",
 
+searchByDate: "Search by Date",
+fromDate: "From Date",
+toDate: "To Date",
+invalidDateRange: "Start date must be before end date",
+
+totalOrders: "Total Orders",
+ordersDuringPeriod: "Orders during selected period",
+
+deliveredOrdersValue: "Delivered Orders Value",
+
+companyTariffTotal: "Company Tariff Total",
+
+totalAccountingCompensation: "Total Accounting Compensation",
+
+customer: "Customer",
+
+noOrdersDuringPeriod: "No orders during selected period",
 invalidAmount: "Invalid amount",
 maxAllowed: "Max allowed",
 paymentAdded: "Payment added successfully",
@@ -282,7 +304,7 @@ accountant2: "محاسب 2",
 manageRestaurants: "إدارة جميع المطاعم داخل النظام",
 searchPlaceholder: "ابحث باسم الزبون أو الهاتف أو المطعم...",
 searchButton: "بحث",
-
+accountingCompensation: "تعويض المحاسبة",
 orderNumber: "رقم الطلب",
 startTime: "وقت البداية",
 endTime: "وقت النهاية",
@@ -345,7 +367,9 @@ lastPayment: "آخر دفعة",
 
 addPayment: "إضافة دفعة",
 exportPdf: "تصدير PDF",
-
+  search: "بحث",
+  addRow: "إضافة صف",
+  print: "طباعة",
 amount: "المبلغ",
 note: "ملاحظة",
 date: "التاريخ",
@@ -418,7 +442,38 @@ cancel: "إلغاء",
 deleteUser: "حذف المستخدم",
 deleteThisUser: "هل تريد حذف هذا المستخدم؟",
 failed: "فشل",
+restaurantDashboard: "لوحة المطعم",
 
+restaurantDetailsSubtitle:
+  "متابعة الطلبات والإحصائيات الخاصة بالمطعم",
+
+searchByDate: "البحث حسب التاريخ",
+
+fromDate: "من تاريخ",
+
+toDate: "إلى تاريخ",
+
+invalidDateRange:
+  "تاريخ البداية يجب أن يكون قبل تاريخ النهاية",
+
+totalOrders: "عدد الطلبات",
+
+ordersDuringPeriod:
+  "مجموع الطلبات خلال الفترة المحددة",
+
+deliveredOrdersValue:
+  "قيمة جميع الطلبات المسلمة",
+
+companyTariffTotal:
+  "مجموع تعرفة الشركة",
+
+totalAccountingCompensation:
+  "مجموع تعويض المحاسبة",
+
+customer: "الزبون",
+
+noOrdersDuringPeriod:
+  "لا توجد طلبات خلال الفترة المحددة",
 id: "الرقم",
 fullNameColumn: "الاسم الكامل",
 usernameColumn: "اسم المستخدم",

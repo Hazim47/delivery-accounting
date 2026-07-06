@@ -236,6 +236,10 @@ const permissionFields = [
     key: "accountantNote",
     label: t("accountantNote"),
   },
+  {
+  key: "accountingCompensation",
+  label: t("accountingCompensation"),
+},
 ];
 return (
   <Box

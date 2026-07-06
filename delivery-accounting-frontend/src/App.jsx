@@ -9,6 +9,7 @@ import Restaurants from "./pages/Restaurants";
 import Statements from "./pages/Statements";
 import RestaurantDetails from "./pages/RestaurantDetails";
 import StatementDetails from "./pages/StatementDetails";
+
 function App() {
   return (
     <BrowserRouter>
