@@ -268,7 +268,6 @@ const updateOrderNotes = async (req, res) => {
   }
 };
 
-/* ========================================================= */
 
 module.exports = {
   createOrder,

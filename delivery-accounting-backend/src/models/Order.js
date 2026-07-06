@@ -41,16 +41,40 @@ const Order = sequelize.define(
       type: DataTypes.DECIMAL(10, 2),
       defaultValue: 0,
     },
+    accountingCompensation: {
+  type: DataTypes.DECIMAL(10, 2),
+  defaultValue: 0,
+},
+isArchived: {
+  type: DataTypes.BOOLEAN,
+  defaultValue: false,
+},
+archiveYear: {
+  type: DataTypes.INTEGER,
+},
 
+archiveMonth: {
+  type: DataTypes.INTEGER,
+},
+ArchiveMonthId: {
+  type: DataTypes.INTEGER,
+  allowNull: true,
+},
+ArchiveFileId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+},
+archivedAt: {
+  type: DataTypes.DATE,
+},
     paymentMethod: {
       type: DataTypes.ENUM("CASH", "WALLET"),
       defaultValue: "CASH",
     },
 
     externalOrderId: {
-      type: DataTypes.STRING,
-      allowNull: false,
-      unique: true,
+  type: DataTypes.STRING,
+  allowNull: false,
     },
 
     ImportLogId: {
@@ -130,10 +154,7 @@ accountantNoteAt: {
 distance: {
   type: DataTypes.STRING,
 },
-ImportLogId: {
-  type: DataTypes.INTEGER,
-  allowNull: true,
-},
+
 cancelReason: {
   type: DataTypes.TEXT,
 },
@@ -177,10 +198,15 @@ invoiceNumber: {
       {
         fields: ["ImportLogId"],
       },
-      {
-        unique: true,
-        fields: ["externalOrderId"],
-      },
+     {
+  fields: ["isArchived"],
+},
+{
+  fields: ["archiveYear"],
+},
+{
+  fields: ["archiveMonth"],
+},
     ],
   }
 );

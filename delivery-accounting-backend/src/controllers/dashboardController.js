@@ -102,6 +102,7 @@ const getGeneralStats = async (req, res) => {
       totalRestaurants,
       totalDrivers,
       totalOrders,
+      
       totalProfit: totalProfit || 0,
     });
   } catch (error) {
@@ -119,10 +120,11 @@ const getOverviewStats = async (req, res) => {
       totalRestaurants,
       totalDrivers,
       totalOrders,
+      totalDriverPayments,
       totalRevenue,
       totalProfit,
       totalExpenses,
-      totalDriverPayments,
+      totalAccountingCompensation,
     ] = await Promise.all([
       Restaurant.count(),
       Driver.count(),
@@ -135,6 +137,7 @@ const getOverviewStats = async (req, res) => {
       }),
       Expense.sum("amount"),
       DriverPayment.sum("amount"),
+      Order.sum("accountingCompensation"),
     ]);
 
     const revenue = totalRevenue || 0;
@@ -152,7 +155,10 @@ const getOverviewStats = async (req, res) => {
       totalExpenses: expenses,
       totalProfit: profit,
       totalDriverPayments: driverPayments,
+      totalAccountingCompensation:
+  totalAccountingCompensation || 0,
       netProfit,
+      
     });
   } catch (error) {
     console.log(error);

@@ -1,7 +1,7 @@
 const express = require("express");
 const multer = require("multer");
 const router = express.Router();
-const authMiddleware = require("../middleware/authMiddleware");
+const { authMiddleware } = require("../middleware/authMiddleware");
 const roleMiddleware = require("../middleware/roleMiddleware");
 const {
   importOrdersExcel,

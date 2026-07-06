@@ -90,6 +90,11 @@ const totalTariff = orders.reduce(
   (sum, order) => sum + Number(order.tariff || 0),
   0
 );
+const totalAccountingCompensation = orders.reduce(
+  (sum, order) =>
+    sum + Number(order.accountingCompensation || 0),
+  0
+);
     const totalCaptainDiscount = orders.reduce(
       (sum, order) => sum + Number(order.driverEarning || 0),
       0
@@ -108,6 +113,7 @@ const totalTariff = orders.reduce(
         totalCaptainDiscount,
         restaurantNet,
         totalTariff,
+        totalAccountingCompensation,
       },
       orders,
     });

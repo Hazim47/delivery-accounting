@@ -9,7 +9,27 @@ type: DataTypes.STRING,
 allowNull: false,
 },
 
+restaurantName: {
+  type: DataTypes.STRING,
+},
 
+archiveYear: {
+  type: DataTypes.INTEGER,
+},
+
+archiveMonth: {
+  type: DataTypes.INTEGER,
+},
+
+isArchived: {
+  type: DataTypes.BOOLEAN,
+  defaultValue: false,
+},
+
+uploadedAt: {
+  type: DataTypes.DATE,
+  defaultValue: DataTypes.NOW,
+},
 totalRows: {
   type: DataTypes.INTEGER,
   defaultValue: 0,

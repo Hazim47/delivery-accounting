@@ -254,6 +254,78 @@ const toggleStatementLock = async (req, res) => {
     res.status(500).json({ message: "Server Error" });
   }
 };
+const createOrderInStatement = async (req, res) => {
+  try {
+    const { statementId } = req.params;
+
+    const statement = await ImportLog.findByPk(statementId);
+
+    if (!statement) {
+      return res.status(404).json({
+        message: "Statement not found",
+      });
+    }
+
+    // إذا الملف مقفل لا يستطيع إلا الأدمن
+    if (statement.isLocked && req.user.role !== "ADMIN") {
+      return res.status(403).json({
+        message: "Statement is locked",
+      });
+    }
+
+    const order = await Order.create({
+      ImportLogId: statementId,
+
+      customerName: "",
+      customerPhone: "",
+      customerAddress: "",
+
+      orderAmount: 0,
+      deliveryFee: 0,
+      companyCommission: 0,
+      restaurantEarning: 0,
+      driverEarning: 0,
+
+      externalOrderId: "",
+
+      orderDate: null,
+      startTime: null,
+      endTime: null,
+
+      restaurantName: "",
+      branchName: "",
+      captainName: "",
+      captainPhone: "",
+
+      tariff: 0,
+      customerAreaInput: "",
+
+      vehicleType: "",
+
+      distance: 0,
+
+      invoiceNumber: null,
+
+      commissionDescription: "",
+
+      cancelReason: "",
+
+      employeeNote: "",
+      accountantNote: "",
+
+      status: "DELIVERED",
+    });
+
+    res.status(201).json(order);
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      message: "Server Error",
+    });
+  }
+};
+/* ========================================================= */
 module.exports = {
   getStatements,
   getStatementOrders,
@@ -261,5 +333,6 @@ module.exports = {
   updateAccountantNote,
   toggleStatementLock,
   updateOrderField ,
-  checkStatementLocked
+  checkStatementLocked,
+  createOrderInStatement,
 };

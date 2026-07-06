@@ -63,29 +63,20 @@ console.log("===================================");
     let restaurantsCreated = 0;
     let driversCreated = 0;
 
-    const [
-      existingRestaurants,
-      existingDrivers,
-      existingOrders,
-    ] = await Promise.all([
-      Restaurant.findAll({
-        raw: true,
-        transaction,
-      }),
+const [
+  existingRestaurants,
+  existingDrivers,
+] = await Promise.all([
+  Restaurant.findAll({
+    raw: true,
+    transaction,
+  }),
 
-      Driver.findAll({
-        raw: true,
-        transaction,
-      }),
-
-      Order.findAll({
-        attributes: [
-          "externalOrderId",
-        ],
-        raw: true,
-        transaction,
-      }),
-    ]);
+  Driver.findAll({
+    raw: true,
+    transaction,
+  }),
+]);
 
     const restaurantMap =
       new Map();
@@ -93,13 +84,7 @@ console.log("===================================");
     const driverMap =
       new Map();
 
-    const existingOrderIds =
-      new Set(
-        existingOrders.map(
-          (o) =>
-            o.externalOrderId
-        )
-      );
+   
 
     existingRestaurants.forEach(
       (r) => {
@@ -146,20 +131,6 @@ if (row["التاريخ"]) {
         skipped++;
         continue;
       }
-
-      if (
-        existingOrderIds.has(
-          orderNumber
-        )
-      ) {
-        skipped++;
-        continue;
-      }
-
-      existingOrderIds.add(
-        orderNumber
-      );
-
       let restaurant = null;
 
       const restaurantName =
@@ -360,14 +331,10 @@ orderDate,
     if (
       ordersToInsert.length
     ) {
-      await Order.bulkCreate(
-        ordersToInsert,
-        {
-          transaction,
-          validate: false,
-          ignoreDuplicates: true,
-        }
-      );
+      await Order.bulkCreate(ordersToInsert, {
+  transaction,
+  validate: false,
+});
     }
 
     for (const [

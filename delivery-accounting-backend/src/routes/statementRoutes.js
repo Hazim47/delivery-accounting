@@ -3,7 +3,7 @@ const express =
 
 const router =
   express.Router();
-const authMiddleware = require("../middleware/authMiddleware");
+const { authMiddleware } = require("../middleware/authMiddleware");
 const {
   getStatements,
   getStatementOrders,
@@ -11,7 +11,8 @@ const {
   updateAccountantNote,
   toggleStatementLock,
   checkStatementLocked,
-  updateOrderField
+  updateOrderField,
+  createOrderInStatement
 } = require(
   "../controllers/statementController"
 );
@@ -60,6 +61,11 @@ router.put(
   authMiddleware,
   checkStatementLocked,
   updateAccountantNote
+);
+router.post(
+  "/:statementId/orders",
+  authMiddleware,
+  createOrderInStatement
 );
 
 module.exports = router;
