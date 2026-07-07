@@ -4,15 +4,12 @@ import API from "../api/axios";
 import StatCard from "../components/StatCard";
 import RevenueChart from "../components/RevenueChart";
 import { useTranslation } from "react-i18next";
+import LocalAtmIcon from "@mui/icons-material/LocalAtm";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
 import PeopleIcon from "@mui/icons-material/People";
 import RestaurantIcon from "@mui/icons-material/Restaurant";
-import TrendingUpIcon from "@mui/icons-material/TrendingUp";
-import ReceiptIcon from "@mui/icons-material/Receipt";
-import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
-import LocalShippingIcon from "@mui/icons-material/LocalShipping";
-import AccountBalanceWalletIcon from "@mui/icons-material/AccountBalanceWallet";
 import SavingsIcon from "@mui/icons-material/Savings";
+
 import {
   Box,
   Button,
@@ -20,44 +17,47 @@ import {
 } from "@mui/material";
 
 import "./Dashboard.css";
+
 function Dashboard() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-const { t } = useTranslation();
-const [resetKey, setResetKey] = useState(0);
-const [user] = useState(() => {
-  return JSON.parse(localStorage.getItem("user") || "null");
-});
-const fetchDashboard = async () => {
-  try {
-    setLoading(true);
-    setError(null);
 
-    const response = await API.get(
-      `/dashboard/overview?reset=${resetKey}`
-    );
+  const [resetKey, setResetKey] = useState(0);
+  const [archiving, setArchiving] = useState(false);
 
-    setStats(response.data);
-  } catch (err) {
-    console.log(err);
-    setError("Failed to load dashboard");
-  } finally {
-    setLoading(false);
-  }
-};
+  const { t } = useTranslation();
 
- useEffect(() => {
-  fetchDashboard();
-}, [resetKey]);
+  const [user] = useState(() => {
+    return JSON.parse(localStorage.getItem("user") || "null");
+  });
+
+  const fetchDashboard = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await API.get(
+        `/dashboard/overview?reset=${resetKey}`
+      );
+
+      setStats(response.data);
+    } catch (err) {
+      console.log(err);
+      setError("Failed to load dashboard");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchDashboard();
+  }, [resetKey]);
+
 
   if (loading) {
     return (
-      <Box
-        display="flex"
-        justifyContent="center"
-        mt={10}
-      >
+      <Box display="flex" justifyContent="center" mt={10}>
         <CircularProgress />
       </Box>
     );
@@ -68,75 +68,88 @@ const fetchDashboard = async () => {
       <Box textAlign="center" mt={10}>
         <h2>{error}</h2>
 
-        <Button
-          variant="contained"
-          onClick={fetchDashboard}
-        >
+        <Button variant="contained" onClick={fetchDashboard}>
           Retry
         </Button>
       </Box>
     );
   }
 
-return (
-  <div className="dashboard">
-    {/* HEADER */}
-    <div className="dashboard-header">
-      <div>
-        <h1 className="dashboard-title">
-          {t("welcome")}, {user?.fullName}
-        </h1>
+  return (
+    <div className="dashboard">
 
-        <p
-          style={{
-            marginTop: 6,
-            color: "#a1a1aa",
-            fontSize: "14px",
-            fontWeight: 500,
-          }}
-        >
-          {user?.role === "ADMIN" && t("administrator")}
-          {user?.role === "ACCOUNTANT_1" && t("accountant")}
-          {user?.role === "ACCOUNTANT_2" && t("accountant")}
-          {user?.role === "EMPLOYEE" && t("employee")}
-        </p>
+      {/* HEADER */}
+      <div
+        className="dashboard-header"
+        style={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
+        {/* LEFT */}
+        <div>
+          <h1 className="dashboard-title">
+            {t("welcome")}, {user?.fullName}
+          </h1>
+
+          <p
+            style={{
+              marginTop: 6,
+              color: "#a1a1aa",
+              fontSize: "14px",
+              fontWeight: 500,
+            }}
+          >
+            {user?.role === "ADMIN" && t("administrator")}
+            {user?.role === "ACCOUNTANT_1" && t("accountant")}
+            {user?.role === "ACCOUNTANT_2" && t("accountant")}
+            {user?.role === "EMPLOYEE" && t("employee")}
+          </p>
+        </div>
       </div>
 
+      {/* STATS GRID */}
+      <div className="stats-grid">
+        <StatCard
+          title={t("orders")}
+          value={stats?.totalOrders || 0}
+          icon={<ShoppingCartIcon />}
+        />
 
-    </div>
+        <StatCard
+          title={t("drivers")}
+          value={stats?.totalDrivers || 0}
+          icon={<PeopleIcon />}
+        />
 
-    {/* STATS GRID */}
-    <div className="stats-grid">
-      <StatCard
-        title={t("orders")}
-        value={stats?.totalOrders || 0}
-        icon={<ShoppingCartIcon />}
-      />
-      <StatCard
-        title={t("drivers")}
-        value={stats?.totalDrivers || 0}
-        icon={<PeopleIcon />}
-      />
-
-      <StatCard
-        title={t("restaurants")}
-        value={stats?.totalRestaurants || 0}
-        icon={<RestaurantIcon />}
-      />
-      <StatCard
-         title={t("accountingCompensation")}
-         value={`${Number(stats?.totalAccountingCompensation || 0).toFixed(2)} JD`}
-         icon={<SavingsIcon />}
+        <StatCard
+          title={t("restaurants")}
+          value={stats?.totalRestaurants || 0}
+          icon={<RestaurantIcon />}
+        />
+          <StatCard
+ title={t("tariff")}
+  value={`${Number(stats?.totalTariff || 0).toFixed(2)} JD`}
+  icon={<LocalAtmIcon />}
 />
-    </div>
+        <StatCard
+          title={t("accountingCompensation")}
+          value={`${Number(
+            stats?.totalAccountingCompensation || 0
+          ).toFixed(2)} JD`}
+          icon={<SavingsIcon />}
+        />
+      </div>
 
-    {/* CHART */}
-    <div className="chart-card">
-      <h3>{t("revenueAnalytics")}</h3>
-      <RevenueChart />
+      {/* CHART */}
+      <div className="chart-card">
+        <h3>{t("revenueAnalytics")}</h3>
+        <RevenueChart />
+      </div>
+
     </div>
-  </div>
-);
+  );
 }
 
 export default Dashboard;

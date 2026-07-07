@@ -14,7 +14,7 @@ import GroupIcon from "@mui/icons-material/Group";
 import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import LogoutIcon from "@mui/icons-material/Logout";
 import LanguageIcon from "@mui/icons-material/Language";
-
+import { useNavigate } from "react-router-dom";
 import "./Sidebar.css";
 
 function Sidebar() {
@@ -23,7 +23,7 @@ function Sidebar() {
 
   const user = JSON.parse(localStorage.getItem("user"));
   const role = user?.role;
-
+  const navigate = useNavigate();
   const [lang, setLang] = useState(i18n.language);
 
   /* sync language state */

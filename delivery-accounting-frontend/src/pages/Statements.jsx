@@ -13,9 +13,11 @@ import {
   TableBody,
   Button,
   Pagination,
+  TextField,
+  InputAdornment,
   CircularProgress,
 } from "@mui/material";
-
+import SearchIcon from "@mui/icons-material/Search";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 
 function Statements() {
@@ -33,22 +35,19 @@ const role = user?.role;
 
   const [pages, setPages] =
     useState(1);
-
+const [search, setSearch] = useState("");
   const loadStatements =
     async () => {
       try {
         setLoading(true);
 
-        const res =
-          await API.get(
-            "/statements",
-            {
-              params: {
-                page,
-                limit: 20,
-              },
-            }
-          );
+       const res = await API.get("/statements", {
+  params: {
+    page,
+    limit: 20,
+    search,
+  },
+});
 
         setStatements(
           res.data.data || []
@@ -65,8 +64,12 @@ const role = user?.role;
     };
 
   useEffect(() => {
+  const timer = setTimeout(() => {
     loadStatements();
-  }, [page]);
+  }, 300);
+
+  return () => clearTimeout(timer);
+}, [page, search]);
 const toggleLock = async (statementId) => {
   if (role !== "ADMIN") return;
 
@@ -83,6 +86,7 @@ const toggleLock = async (statementId) => {
     console.log(err);
   }
 };
+
 return (
   <Box
     sx={{
@@ -108,7 +112,73 @@ return (
     >
       {t("statementsTitle")}
     </Typography>
+<Paper
+  sx={{
+    mb: 3,
+    p: 3,
+    borderRadius: "24px",
+    background: "rgba(255,255,255,.03)",
+    backdropFilter: "blur(18px)",
+    border: "1px solid rgba(250,204,21,.12)",
+    boxShadow: "0 20px 50px rgba(0,0,0,.35)",
+  }}
+>
+  <TextField
+    fullWidth
+    label="بحث باسم الملف أو التاريخ"
+    value={search}
+    onChange={(e) => setSearch(e.target.value)}
+    InputProps={{
+      startAdornment: (
+        <InputAdornment position="start">
+          <SearchIcon
+            sx={{
+              color: "#facc15",
+              mr: 1,
+            }}
+          />
+        </InputAdornment>
+      ),
+    }}
+    sx={{
+      "& input": {
+        color: "#fff",
+      },
 
+      "& label": {
+        color: "#bdbdbd",
+      },
+
+      "& label.Mui-focused": {
+        color: "#facc15",
+      },
+
+      "& .MuiOutlinedInput-root": {
+        borderRadius: "16px",
+        background: "rgba(255,255,255,.02)",
+        transition: ".25s",
+
+        "& fieldset": {
+          borderColor: "rgba(250,204,21,.25)",
+        },
+
+        "&:hover fieldset": {
+          borderColor: "#facc15",
+        },
+
+        "&.Mui-focused": {
+          background: "rgba(255,255,255,.04)",
+          boxShadow: "0 0 20px rgba(250,204,21,.18)",
+        },
+
+        "&.Mui-focused fieldset": {
+          borderColor: "#facc15",
+          borderWidth: "2px",
+        },
+      },
+    }}
+  />
+</Paper>
     {/* TABLE CARD */}
     <Paper
       sx={{
