@@ -116,29 +116,39 @@ const getGeneralStats = async (req, res) => {
 ========================= */
 const getOverviewStats = async (req, res) => {
   try {
-    const [
-      totalRestaurants,
-      totalDrivers,
-      totalOrders,
-      totalDriverPayments,
-      totalRevenue,
-      totalProfit,
-      totalExpenses,
-      totalAccountingCompensation,
-    ] = await Promise.all([
-      Restaurant.count(),
-      Driver.count(),
-      Order.count(),
-      Order.sum("orderAmount", {
-        where: { status: "DELIVERED" },
-      }),
-      Order.sum("companyCommission", {
-        where: { status: "DELIVERED" },
-      }),
-      Expense.sum("amount"),
-      DriverPayment.sum("amount"),
-      Order.sum("accountingCompensation"),
-    ]);
+   const [
+  totalRestaurants,
+  totalDrivers,
+  totalOrders,
+  totalRevenue,
+  totalTariff,
+  totalProfit,
+  totalExpenses,
+  totalDriverPayments,
+  totalAccountingCompensation,
+] = await Promise.all([
+  Restaurant.count(),
+  Driver.count(),
+  Order.count(),
+
+  Order.sum("orderAmount", {
+    where: { status: "DELIVERED" },
+  }),
+
+  Order.sum("tariff", {
+    where: { status: "DELIVERED" },
+  }),
+
+  Order.sum("companyCommission", {
+    where: { status: "DELIVERED" },
+  }),
+
+  Expense.sum("amount"),
+
+  DriverPayment.sum("amount"),
+
+  Order.sum("accountingCompensation"),
+]);
 
     const revenue = totalRevenue || 0;
     const profit = totalProfit || 0;
@@ -157,6 +167,7 @@ const getOverviewStats = async (req, res) => {
       totalDriverPayments: driverPayments,
       totalAccountingCompensation:
   totalAccountingCompensation || 0,
+    totalTariff: totalTariff || 0,
       netProfit,
       
     });

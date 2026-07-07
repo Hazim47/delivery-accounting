@@ -10,6 +10,7 @@ const {
 const {
   getImportLogs,
   deleteImportLog,
+   getImportFileOrders
 } = require("../controllers/importLogController");
 const fs = require("fs");
 
@@ -49,7 +50,10 @@ router.delete(
   authMiddleware,
   deleteImportLog
 );
-
+router.get(
+ "/import-logs/:id/orders",
+ getImportFileOrders
+);
 router.get("/logs", getImportLogs);
 
 

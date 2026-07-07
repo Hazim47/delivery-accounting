@@ -15,6 +15,7 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const closingRoutes = require("./routes/closingRoutes");
 const chartsRoutes = require("./routes/chartsRoutes");
 const importRoutes =require("./routes/importRoutes");
+
 const driverPaymentRoutes = require("./routes/driverPaymentRoutes");
 const statementRoutes =
   require("./routes/statementRoutes");
@@ -45,7 +46,6 @@ app.use("/api/drivers", driverRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/restaurants", restaurantRoutes);
-
 app.get("/", (req, res) => {
   res.json({
     success: true,

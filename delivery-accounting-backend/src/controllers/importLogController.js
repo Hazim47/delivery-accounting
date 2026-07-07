@@ -25,6 +25,42 @@ const getImportLogs = async (req, res) => {
 /**
  * DELETE IMPORT LOG (OPTIMIZED VERSION)
  */
+const getImportFileOrders = async (req,res)=>{
+
+  try {
+
+    const {id}=req.params;
+
+
+    const orders = await Order.findAll({
+
+      where:{
+        ImportLogId:id
+      },
+
+      order:[
+        ["id","ASC"]
+      ]
+
+    });
+
+
+    res.json({
+      data:orders
+    });
+
+
+  } catch(err){
+
+    console.log(err);
+
+    res.status(500).json({
+      message:"Server Error"
+    });
+
+  }
+
+};
 const deleteImportLog = async (req, res) => {
   const transaction = await sequelize.transaction();
 
@@ -131,4 +167,5 @@ const deleteImportLog = async (req, res) => {
 module.exports = {
   getImportLogs,
   deleteImportLog,
+   getImportFileOrders
 };

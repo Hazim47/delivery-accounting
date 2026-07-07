@@ -5,39 +5,52 @@ const ImportLog = require("../models/ImportLog");
 
 const getStatements = async (req, res) => {
   try {
-    const page =
-      Number(req.query.page) || 1;
+    const page = Number(req.query.page) || 1;
+    const limit = Number(req.query.limit) || 20;
+    const offset = (page - 1) * limit;
 
-    const limit =
-      Number(req.query.limit) || 20;
+    const search = (req.query.search || "").trim();
 
-    const offset =
-      (page - 1) * limit;
+    const where = {};
 
-    const { count, rows } =
-      await ImportLog.findAndCountAll({
-        order: [["createdAt", "DESC"]],
-        limit,
-        offset,
-      });
+    if (search) {
+      where[Op.or] = [
+        {
+          fileName: {
+            [Op.iLike]: `%${search}%`,
+          },
+        },
+      ];
+
+      // إذا المستخدم كتب سنة مثل 2026
+      if (/^\d{4}$/.test(search)) {
+        where.createdAt = {
+          [Op.gte]: new Date(`${search}-01-01`),
+          [Op.lt]: new Date(`${Number(search) + 1}-01-01`),
+        };
+      }
+    }
+
+    const { count, rows } = await ImportLog.findAndCountAll({
+      where,
+      order: [["createdAt", "DESC"]],
+      limit,
+      offset,
+    });
 
     return res.json({
       total: count,
       page,
-      pages: Math.ceil(
-        count / limit
-      ),
+      pages: Math.ceil(count / limit),
       data: rows,
     });
+
   } catch (error) {
     console.log(error);
 
-    return res
-      .status(500)
-      .json({
-        message:
-          "Failed to fetch statements",
-      });
+    return res.status(500).json({
+      message: "Failed to fetch statements",
+    });
   }
 };
 const updateOrderField = async (req, res) => {
