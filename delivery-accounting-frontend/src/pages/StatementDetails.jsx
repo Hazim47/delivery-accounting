@@ -230,32 +230,38 @@ useEffect(() => {
 
   cellClassRules: {
     "bg-red-cell": (params) => {
-      return (
-        params.data?.customerAddress &&
-        params.data?.customerAreaInput &&
-        params.data.customerAddress.trim() !==
-          params.data.customerAreaInput.trim()
-      );
+      const address = params.data?.customerAddress?.trim() || "";
+      const area = params.data?.customerAreaInput?.trim() || "";
+
+      return address !== area;
     },
   },
 
   valueFormatter: (params) => {
-    const addr = params.value;
-    const area = params.data?.customerAreaInput;
+    const address = params.value?.trim() || "";
+    const area = params.data?.customerAreaInput?.trim() || "";
 
-    if (addr && area && addr.trim() !== area.trim()) {
-      return `⚠ ${addr}`;
+    if (address !== area) {
+      return `⚠ ${address || "-"}`;
     }
 
-    return addr || "-";
+    return address || "-";
   },
 },
-
 {
   field: "customerAreaInput",
   headerName: t("customerArea"),
   width: 180,
   editable: () => canEdit("customerAreaInput"),
+
+  cellClassRules: {
+    "bg-red-cell": (params) => {
+      const address = params.data?.customerAddress?.trim() || "";
+      const area = params.data?.customerAreaInput?.trim() || "";
+
+      return address !== area;
+    },
+  },
 },
 
 {

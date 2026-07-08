@@ -90,7 +90,13 @@ function App() {
 />
 <Route
   path="/restaurants/:id"
-  element={<RestaurantDetails />}
+  element={
+    <ProtectedRoute>
+      <MainLayout>
+        <RestaurantDetails />
+      </MainLayout>
+    </ProtectedRoute>
+  }
 />
 
       </Routes>

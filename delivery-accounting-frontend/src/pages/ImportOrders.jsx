@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import API from "../api/axios";
-import DeleteIcon from "@mui/icons-material/Delete";
+
 import { useTranslation } from "react-i18next";
 import {
   Box,
@@ -24,20 +24,10 @@ function ImportOrders() {
   const [file, setFile] = useState(null);
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
-  const [logs, setLogs] = useState([]);
   const { t } = useTranslation();
-  const loadLogs = async () => {
-    try {
-      const res = await API.get("/import/logs");
-      setLogs(res.data || []);
-    } catch (err) {
-      console.log(err);
-    }
-  };
 
-  useEffect(() => {
-    loadLogs();
-  }, []);
+
+  
 
   const handleUpload = async () => {
     if (!file) return;
@@ -54,9 +44,12 @@ function ImportOrders() {
         },
       });
 
-      setResult(res.data);
-      await loadLogs();
-      setFile(null);
+      setResult({
+  ...res.data,
+  fileName: file.name,
+});
+
+setFile(null);
     } catch (err) {
       console.log(err);
       alert(t("importFailed"));
@@ -65,24 +58,7 @@ function ImportOrders() {
     }
   };
 
-const deleteImport = async (id) => {
-  const ok = window.confirm(t("deleteImportConfirm"));
-  if (!ok) return;
 
-  try {
-    const res = await API.delete(`/import/logs/${id}`);
-
-    console.log("DELETE SUCCESS:", res.data);
-
-    await loadLogs();
-  } catch (error) {
-    console.log("FULL ERROR:", error);
-    console.log("RESPONSE:", error.response?.data);
-    console.log("STATUS:", error.response?.status);
-
-    alert(error.response?.data?.message || "Delete failed");
-  }
-};
 const user = JSON.parse(localStorage.getItem("user"));
 const isAdmin = user?.role === "ADMIN";
 return (
@@ -255,150 +231,46 @@ return (
         </Button>
       </Box>
 
-      {/* RESULT */}
-      {result && (
-        <Alert
-          severity="success"
-          sx={{
-            mt: 3,
-            borderRadius: "16px",
-            background: "rgba(250,204,21,0.08)",
-            color: "#facc15",
-          }}
-        >
+     {result && (
+<Alert
+severity="success"
+sx={{
+ mt:3,
+ borderRadius:"16px",
+ background:"rgba(34,197,94,0.1)",
+ color:"#22c55e",
+ fontWeight:700
+}}
+>
+
+تم استيراد الملف بنجاح ✅
+
+<br/>
+
+الملف:
+{result.fileName}
+
+<br/>
+
 {t("imported")}: {result.imported}
-<br />
+
+<br/>
+
 {t("skipped")}: {result.skipped}
-<br />
-{t("totalRows")}: {result.totalRows}
-<br />
+
+<br/>
+
 {t("restaurants")}: {result.restaurantsCreated}
-<br />
+
+<br/>
+
 {t("drivers")}: {result.driversCreated}
-        </Alert>
-      )}
-    </Paper>
 
-    {/* HISTORY */}
-    <Paper
-      sx={{
-        p: 3,
-        borderRadius: "24px",
-        background: "rgba(255,255,255,0.03)",
-        backdropFilter: "blur(22px)",
-        border: "1px solid rgba(250,204,21,0.12)",
-        boxShadow: "0 25px 60px rgba(0,0,0,0.6)",
-      }}
-    >
-      <Typography
-        variant="h5"
-        fontWeight={900}
-        mb={3}
-        sx={{
-          background:
-            "linear-gradient(90deg,#facc15,#f59e0b,#fde047)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
-        }}
-      >
-        {t("importHistory")}
-      </Typography>
-
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <TableRow
-              sx={{
-                background: "rgba(0,0,0,0.6)",
-              }}
-            >
-              {[
-  t("fileName"),
-  t("totalRows"),
-  t("imported"),
-  t("skipped"),
-  t("restaurants"),
-  t("drivers"),
-  t("date"),
-  ...(isAdmin ? [t("actions")] : []),
-].map((h) => (
-                <TableCell
-                  key={h}
-                  sx={{
-                    color: "#e5e5e5",
-                    fontWeight: 800,
-                  }}
-                >
-                  {h}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
-
-          <TableBody>
-            {logs.length === 0 ? (
-              <TableRow>
-                <TableCell
-                 colSpan={isAdmin ? 8 : 7}
-                  align="center"
-                  sx={{ color: "#a1a1aa", py: 5 }}
-                >
-                  {t("noImportsYet")}
-                </TableCell>
-              </TableRow>
-            ) : (
-              logs.map((log) => (
-                <TableRow
-                  key={log.id}
-                  hover
-                  sx={{
-                    "& td": {
-                      color: "#e5e5e5",
-                      borderBottom:
-                        "1px solid rgba(255,255,255,0.05)",
-                    },
-
-                    "&:hover": {
-                      background: "rgba(250,204,21,0.04)",
-                    },
-                  }}
-                >
-                  <TableCell>{log.fileName}</TableCell>
-                  <TableCell>{log.totalRows}</TableCell>
-                  <TableCell>{log.importedOrders}</TableCell>
-                  <TableCell>{log.skippedOrders}</TableCell>
-                  <TableCell>{log.restaurantsCreated}</TableCell>
-                  <TableCell>{log.driversCreated}</TableCell>
-
-                  <TableCell>
-                    {new Date(log.createdAt).toLocaleString()}
-                  </TableCell>
-
-             {isAdmin && (
-  <TableCell>
-    <Button
-      color="error"
-      variant="contained"
-      size="small"
-      startIcon={<DeleteIcon />}
-      onClick={() => deleteImport(log.id)}
-      sx={{
-        borderRadius: "10px",
-        fontWeight: 800,
-        textTransform: "none",
-      }}
-    >
-      {t("delete")}
-    </Button>
-  </TableCell>
+</Alert>
 )}
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
     </Paper>
+
+  
   </Box>
 );
 }

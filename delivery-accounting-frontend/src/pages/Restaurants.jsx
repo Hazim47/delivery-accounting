@@ -25,7 +25,7 @@ import SearchIcon from "@mui/icons-material/Search";
 function Restaurants() {
 
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
 
   const [restaurants, setRestaurants] = useState([]);
   const [filteredRestaurants, setFilteredRestaurants] = useState([]);
@@ -197,194 +197,235 @@ function Restaurants() {
       />
     </Paper>
 
-    {/* TABLE */}
-    <TableContainer
-      component={Paper}
-      sx={{
-        borderRadius: "28px",
-        overflow: "hidden",
-        background: "rgba(255,255,255,.03)",
-        backdropFilter: "blur(20px)",
-        border: "1px solid rgba(250,204,21,.12)",
-        boxShadow:
-          "0 30px 70px rgba(0,0,0,.6)",
-      }}
-    >
-      <Table>
+   {/* TABLE */}
+<TableContainer
+  component={Paper}
+  sx={{
+    borderRadius: "28px",
+    overflow: "hidden",
+    background: "rgba(255,255,255,.03)",
+    backdropFilter: "blur(20px)",
+    border: "1px solid rgba(250,204,21,.12)",
+    boxShadow:
+      "0 30px 70px rgba(0,0,0,.6)",
+  }}
+>
+  <Table>
 
-        <TableHead>
-          <TableRow
+    <TableHead>
+      <TableRow
+        sx={{
+          background:
+            "linear-gradient(90deg,#181818,#111,#181818)",
+        }}
+      >
+        {[
+          "#",
+          t("name"),
+          t("lastOrder"),
+          t("status"),
+          t("actions"),
+        ].map((item) => (
+          <TableCell
+            key={item}
+            align="center"
             sx={{
-              background:
-                "linear-gradient(90deg,#181818,#111,#181818)",
+              color: "#facc15",
+              fontWeight: 900,
+              fontSize: 15,
+              borderBottom:
+                "1px solid rgba(250,204,21,.15)",
             }}
           >
-            {[
-              "#",
-              t("name"),
-              t("phone"),
-              t("status"),
-              t("actions"),
-            ].map((item) => (
-              <TableCell
-                key={item}
-                sx={{
-                  color: "#facc15",
-                  fontWeight: 900,
-                  fontSize: 15,
-                  borderBottom:
-                    "1px solid rgba(250,204,21,.15)",
-                }}
-              >
-                {item}
-              </TableCell>
-            ))}
-          </TableRow>
-        </TableHead>
+            {item}
+          </TableCell>
+        ))}
+      </TableRow>
+    </TableHead>
 
-        <TableBody>
 
-          {filteredRestaurants.map((r, index) => (
+    <TableBody>
 
-            <TableRow
-              key={r.id}
-              hover
+      {filteredRestaurants.map((r, index) => (
+
+        <TableRow
+          key={r.id}
+          hover
+          sx={{
+            transition: ".25s",
+
+            "& td": {
+              borderBottom:
+                "1px solid rgba(255,255,255,.05)",
+            },
+
+            "&:hover": {
+              background:
+                "rgba(250,204,21,.05)",
+              transform:
+                "scale(1.003)",
+            },
+          }}
+        >
+
+
+          {/* NUMBER */}
+          <TableCell align="center">
+
+            <Box
               sx={{
-                transition: ".25s",
+                width: 36,
+                height: 36,
+                borderRadius: "50%",
+                background:
+                  "linear-gradient(135deg,#facc15,#f59e0b)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                color: "#000",
+                fontWeight: 900,
+                margin: "auto",
+                boxShadow:
+                  "0 8px 18px rgba(250,204,21,.25)",
+              }}
+            >
+              {index + 1}
+            </Box>
 
-                "& td": {
-                  borderBottom:
-                    "1px solid rgba(255,255,255,.05)",
-                },
+          </TableCell>
+
+
+
+          {/* NAME */}
+          <TableCell
+            align="center"
+            sx={{
+              color: "#fff",
+              fontWeight: 700,
+            }}
+          >
+            {r.name}
+          </TableCell>
+
+
+
+          {/* LAST ORDER */}
+          <TableCell
+            align="center"
+            sx={{
+              color: "#d1d5db",
+              fontWeight: 600,
+              fontSize: 16,
+            }}
+          >
+            {r.lastOrderDate
+              ? new Date(
+                  r.lastOrderDate
+                ).toLocaleDateString(
+                  i18n.language === "ar"
+                    ? "ar-EG"
+                    : "en-US",
+                  {
+                    year: "numeric",
+                    month: "long",
+                    day: "numeric",
+                  }
+                )
+              : "-"
+            }
+          </TableCell>
+
+
+
+          {/* STATUS */}
+          <TableCell align="center">
+
+            {r.active ? (
+
+              <Chip
+                label="ACTIVE"
+                sx={{
+                  color: "#22c55e",
+                  background:
+                    "rgba(34,197,94,.12)",
+                  fontWeight: 800,
+                }}
+              />
+
+            ) : (
+
+              <Chip
+                label="INACTIVE"
+                sx={{
+                  color: "#ef4444",
+                  background:
+                    "rgba(239,68,68,.12)",
+                  fontWeight: 800,
+                }}
+              />
+
+            )}
+
+          </TableCell>
+
+
+
+          {/* ACTIONS */}
+          <TableCell
+            align="center"
+            sx={{
+              verticalAlign: "middle",
+              textAlign: "center",
+            }}
+          >
+
+            <Button
+              startIcon={<VisibilityIcon />}
+              onClick={() =>
+                navigate(
+                  `/restaurants/${r.id}`
+                )
+              }
+              sx={{
+                px: 3,
+                py: 1,
+                borderRadius: "14px",
+                textTransform: "none",
+                display: "inline-flex",
+                alignItems: "center",
+                justifyContent: "center",
+                fontWeight: 900,
+                color: "#000",
+
+                background:
+                  "linear-gradient(135deg,#facc15,#f59e0b)",
+
+                boxShadow:
+                  "0 15px 30px rgba(250,204,21,.2)",
 
                 "&:hover": {
-                  background:
-                    "rgba(250,204,21,.05)",
                   transform:
-                    "scale(1.003)",
+                    "translateY(-2px)",
+
+                  background:
+                    "linear-gradient(135deg,#fde047,#facc15)",
                 },
               }}
             >
+              {t("RestaurantDetails")}
+            </Button>
 
-              {/* NUMBER */}
+          </TableCell>
 
-              <TableCell>
 
-                <Box
-                  sx={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: "50%",
-                    background:
-                      "linear-gradient(135deg,#facc15,#f59e0b)",
-                    display: "flex",
-                    alignItems: "center",
-                    justifyContent: "center",
-                    color: "#000",
-                    fontWeight: 900,
-                    boxShadow:
-                      "0 8px 18px rgba(250,204,21,.25)",
-                  }}
-                >
-                  {index + 1}
-                </Box>
+        </TableRow>
 
-              </TableCell>
+      ))}
 
-              {/* NAME */}
+    </TableBody>
 
-              <TableCell
-                sx={{
-                  color: "#fff",
-                  fontWeight: 700,
-                }}
-              >
-                {r.name}
-              </TableCell>
-
-              {/* PHONE */}
-
-              <TableCell
-                sx={{
-                  color: "#d1d5db",
-                }}
-              >
-                {r.phone || "-"}
-              </TableCell>
-
-              {/* STATUS */}
-
-              <TableCell>
-
-                {r.active ? (
-                  <Chip
-                    label="ACTIVE"
-                    sx={{
-                      color: "#22c55e",
-                      background:
-                        "rgba(34,197,94,.12)",
-                      fontWeight: 800,
-                    }}
-                  />
-                ) : (
-                  <Chip
-                    label="INACTIVE"
-                    sx={{
-                      color: "#ef4444",
-                      background:
-                        "rgba(239,68,68,.12)",
-                      fontWeight: 800,
-                    }}
-                  />
-                )}
-
-              </TableCell>
-
-              {/* ACTION */}
-
-              <TableCell align="center">
-
-                <Button
-                  startIcon={<VisibilityIcon />}
-                  onClick={() =>
-                    navigate(
-                      `/restaurants/${r.id}`
-                    )
-                  }
-                  sx={{
-                    px: 3,
-                    py: 1,
-                    borderRadius: "14px",
-                    textTransform: "none",
-                    fontWeight: 900,
-                    color: "#000",
-                    background:
-                      "linear-gradient(135deg,#facc15,#f59e0b)",
-
-                    boxShadow:
-                      "0 15px 30px rgba(250,204,21,.2)",
-
-                    "&:hover": {
-                      transform:
-                        "translateY(-2px)",
-                      background:
-                        "linear-gradient(135deg,#fde047,#facc15)",
-                    },
-                  }}
-                >
-                  بيانات المطعم
-                </Button>
-
-              </TableCell>
-
-            </TableRow>
-
-          ))}
-
-        </TableBody>
-
-      </Table>
-    </TableContainer>
+  </Table>
+</TableContainer>
   </Box>
 );
 }

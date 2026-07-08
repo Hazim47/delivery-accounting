@@ -1,5 +1,5 @@
 import { useEffect, useState, useCallback } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import API from "../api/axios";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFnsV2";
@@ -32,7 +32,7 @@ function RestaurantDetails() {
   const [restaurant, setRestaurant] = useState(null);
   const [stats, setStats] = useState(null);
   const [orders, setOrders] = useState([]);
-
+const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
 
   const [fromDate, setFromDate] = useState(null);
@@ -149,6 +149,7 @@ return (
         }}
       >
         <Box>
+          
           <Typography
             variant="h3"
             sx={{
@@ -173,32 +174,6 @@ return (
           </Typography>
         </Box>
 
-        <Paper
-          elevation={0}
-          sx={{
-            px: 4,
-            py: 2,
-            borderRadius: "22px",
-            background:
-              "linear-gradient(135deg,#facc15,#f59e0b)",
-            color: "#000",
-            minWidth: 220,
-            textAlign: "center",
-            boxShadow:
-              "0 20px 40px rgba(250,204,21,.25)",
-          }}
-        >
-          <Typography fontWeight={700}>
-            {t("restaurantDashboard")}
-          </Typography>
-
-          <Typography
-            fontWeight={900}
-            fontSize={34}
-          >
-            🏪
-          </Typography>
-        </Paper>
       </Box>
     </Paper>
 

@@ -19,7 +19,7 @@ import {
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import VisibilityIcon from "@mui/icons-material/Visibility";
-
+import DeleteIcon from "@mui/icons-material/Delete";
 function Statements() {
   const navigate = useNavigate();
 const { t } = useTranslation();
@@ -86,7 +86,20 @@ const toggleLock = async (statementId) => {
     console.log(err);
   }
 };
+const deleteStatement = async (id) => {
+  const ok = window.confirm("هل تريد حذف هذا الملف نهائياً؟");
+  if (!ok) return;
 
+  try {
+    await API.delete(`/import/logs/${id}`);
+
+    await loadStatements();
+
+  } catch (err) {
+    console.log(err);
+    alert("فشل الحذف");
+  }
+};
 return (
   <Box
     sx={{
@@ -125,7 +138,7 @@ return (
 >
   <TextField
     fullWidth
-    label="بحث باسم الملف أو التاريخ"
+   label={t("searchFileOrDate")}
     value={search}
     onChange={(e) => setSearch(e.target.value)}
     InputProps={{
@@ -180,163 +193,180 @@ return (
   />
 </Paper>
     {/* TABLE CARD */}
-    <Paper
-      sx={{
-        p: 3,
-        borderRadius: "24px",
-        background: "rgba(255,255,255,0.03)",
-        backdropFilter: "blur(22px)",
-        border: "1px solid rgba(250,204,21,0.12)",
-        boxShadow: "0 25px 60px rgba(0,0,0,0.6)",
-      }}
-    >
-      {loading ? (
-        <Box
-          sx={{
-            textAlign: "center",
-            py: 8,
-          }}
-        >
-          <CircularProgress sx={{ color: "#facc15" }} />
-        </Box>
-      ) : (
-        <Table>
-          <TableHead>
-            <TableRow
+   <Paper
+  sx={{
+    p: 3,
+    borderRadius: "24px",
+    background: "rgba(255,255,255,0.03)",
+    backdropFilter: "blur(22px)",
+    border: "1px solid rgba(250,204,21,0.12)",
+    boxShadow: "0 25px 60px rgba(0,0,0,0.6)",
+    overflowX: "auto",
+  }}
+>
+  {loading ? (
+    <Box sx={{ textAlign: "center", py: 8 }}>
+      <CircularProgress sx={{ color: "#facc15" }} />
+    </Box>
+  ) : (
+    <Table>
+      <TableHead>
+        <TableRow sx={{ background: "linear-gradient(90deg,#0a0a0a,#111)" }}>
+          {[
+            t("fileName"),
+            t("total"),
+            t("imported"),
+            t("skipped"),
+            t("restaurants"),
+            t("drivers"),
+            t("date"),
+            t("action"),
+          ].map((h) => (
+            <TableCell
+              key={h}
               sx={{
-                background:
-                  "linear-gradient(90deg,#0a0a0a,#111)",
+                color: "#e5e5e5",
+                fontWeight: 800,
+                whiteSpace: "nowrap",
               }}
             >
-              {[
-  t("fileName"),
-  t("total"),
-  t("imported"),
-  t("skipped"),
-  t("restaurants"),
-  t("drivers"),
-  t("date"),
-  t("action"),
-].map((h) => (
-                <TableCell
-                  key={h}
+              {h}
+            </TableCell>
+          ))}
+        </TableRow>
+      </TableHead>
+
+      <TableBody>
+        {statements.map((statement) => (
+          <TableRow
+            key={statement.id}
+            hover
+            sx={{
+              "& td": {
+                color: "#e5e5e5",
+                borderBottom: "1px solid rgba(255,255,255,0.05)",
+              },
+              "&:hover": {
+                background: "rgba(250,204,21,0.04)",
+              },
+            }}
+          >
+            <TableCell sx={{ fontWeight: 700, maxWidth: 240 }}>
+              <Box sx={{ display: "flex", alignItems: "center", gap: 1, minWidth: 0 }}>
+                <Box
                   sx={{
-                    color: "#e5e5e5",
-                    fontWeight: 800,
+                    width: 10,
+                    height: 10,
+                    borderRadius: "50%",
+                    flexShrink: 0,
+                    backgroundColor: statement.isLocked ? "#ef4444" : "#22c55e",
+                    boxShadow: statement.isLocked
+                      ? "0 0 8px rgba(239,68,68,.8)"
+                      : "0 0 8px rgba(34,197,94,.8)",
+                  }}
+                />
+
+                <Typography
+                  noWrap
+                  title={statement.fileName}
+                  sx={{ fontWeight: 700 }}
+                >
+                  {statement.fileName}
+                </Typography>
+              </Box>
+            </TableCell>
+
+            <TableCell>{statement.totalRows}</TableCell>
+
+            <TableCell sx={{ color: "#22c55e", fontWeight: 800 }}>
+              {statement.importedOrders}
+            </TableCell>
+
+            <TableCell sx={{ color: "#facc15", fontWeight: 800 }}>
+              {statement.skippedOrders}
+            </TableCell>
+
+            <TableCell>{statement.restaurantsCreated}</TableCell>
+
+            <TableCell>{statement.driversCreated}</TableCell>
+
+            <TableCell sx={{ whiteSpace: "nowrap" }}>
+              {new Date(statement.createdAt).toLocaleString()}
+            </TableCell>
+
+            <TableCell>
+              <Box sx={{ display: "flex", gap: 1 }}>
+                <Button
+                  variant="contained"
+                  startIcon={<VisibilityIcon />}
+                  onClick={() => navigate(`/statements/${statement.id}`)}
+                  sx={{
+                    textTransform: "none",
+                    fontWeight: 900,
+                    borderRadius: "10px",
+                    color: "#000",
+                    background: "linear-gradient(135deg,#facc15,#f59e0b)",
+                    "&:hover": {
+                      transform: "scale(1.03)",
+                    },
                   }}
                 >
-                  {h}
-                </TableCell>
-              ))}
-            </TableRow>
-          </TableHead>
+                  {t("view")}
+                </Button>
 
-          <TableBody>
-            {statements.map((statement) => (
-              <TableRow
-                key={statement.id}
-                hover
-                sx={{
-                  "& td": {
-                    color: "#e5e5e5",
-                    borderBottom:
-                      "1px solid rgba(255,255,255,0.05)",
-                  },
-
-                  "&:hover": {
-                    background: "rgba(250,204,21,0.04)",
-                  },
-                }}
-              >
-<TableCell sx={{ fontWeight: 700, display: "flex", alignItems: "center", gap: 1 }}>
-  
-  {/* Status Dot */}
-  <Box
-    sx={{
-      width: 10,
-      height: 10,
-      borderRadius: "50%",
-      backgroundColor: statement.isLocked ? "#ef4444" : "#22c55e",
-      boxShadow: statement.isLocked
-        ? "0 0 8px rgba(239,68,68,0.8)"
-        : "0 0 8px rgba(34,197,94,0.8)",
-    }}
-  />
-
-  {statement.fileName}
-</TableCell>
-
-                <TableCell>
-                  {statement.totalRows}
-                </TableCell>
-
-                <TableCell sx={{ color: "#22c55e", fontWeight: 800 }}>
-                  {statement.importedOrders}
-                </TableCell>
-
-                <TableCell sx={{ color: "#facc15", fontWeight: 800 }}>
-                  {statement.skippedOrders}
-                </TableCell>
-
-                <TableCell>
-                  {statement.restaurantsCreated}
-                </TableCell>
-
-                <TableCell>
-                  {statement.driversCreated}
-                </TableCell>
-
-                <TableCell>
-                  {new Date(statement.createdAt).toLocaleString()}
-                </TableCell>
-
-                <TableCell>
+                {role === "ADMIN" && (
                   <Button
                     variant="contained"
-                    startIcon={<VisibilityIcon />}
-                    onClick={() =>
-                      navigate(`/statements/${statement.id}`)
-                    }
+                    color={statement.isLocked ? "success" : "error"}
+                    onClick={() => toggleLock(statement.id)}
                     sx={{
-                      textTransform: "none",
-                      fontWeight: 900,
                       borderRadius: "10px",
-                      color: "#000",
-                      background:
-                        "linear-gradient(135deg,#facc15,#f59e0b)",
-                      "&:hover": {
-                        transform: "scale(1.03)",
-                      },
+                      whiteSpace: "nowrap",
                     }}
                   >
-                    {t("view")}
+                    {statement.isLocked ? t("unlock") : t("lock")}
                   </Button>
-                  {role === "ADMIN" && (
-  <Button
-    variant="contained"
-    color={
-      statement.isLocked
-        ? "success"
-        : "error"
-    }
-    onClick={() =>
-      toggleLock(statement.id)
-    }
-    sx={{ ml: 1 }}
-  >
-    {statement.isLocked
-      ? "فتح"
-      : "إغلاق"}
-  </Button>
-)}
-                </TableCell>
-              </TableRow>
-            ))}
-          </TableBody>
-        </Table>
-      )}
-    </Paper>
 
+                )}
+                 {role === "ADMIN" && (
+ <Button
+  variant="contained"
+  color="error"
+  startIcon={<DeleteIcon />}
+  onClick={() => deleteStatement(statement.id)}
+  sx={{
+    ml: 3, // يبعده عن الزر اللي قبله
+
+    textTransform: "none",
+    fontWeight: 900,
+    borderRadius: "10px",
+
+    color: "#000000",
+
+    background:
+      "linear-gradient(135deg,#ef4444,#dc2626)",
+
+    boxShadow:
+      "0 8px 20px rgba(239,68,68,.35)",
+
+    "&:hover": {
+      transform: "scale(1.05)",
+      background:
+        "linear-gradient(135deg,#f87171,#ef4444)",
+    },
+  }}
+>
+  {t("delete")}
+</Button>
+    )}
+              </Box>
+            </TableCell>
+          </TableRow>
+        ))}
+      </TableBody>
+    </Table>
+  )}
+</Paper>
     {/* PAGINATION */}
     <Box
       sx={{

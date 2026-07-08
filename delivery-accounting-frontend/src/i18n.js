@@ -26,6 +26,8 @@ i18n.use(initReactI18next).init({
           search: "Search",
   addRow: "Add Row",
   print: "Print",
+  open:"Open",
+  closed:"Closed",
         welcome: "Welcome",
 driversDashboard: "Drivers Dashboard",
 addDriver: "Add Driver",
@@ -119,9 +121,9 @@ drivers: "Drivers",
 restaurants: "Restaurants",
 deliveryERP: "Delivery ERP",
 financialDashboard: "Financial & Operations Dashboard",
-
+ lastOrder: "Last Order",
 profit: "Profit",
-
+RestaurantDetails:"Restaurant Details",
 importExcel: "Import Excel",
 statements: "Statements",
 revenueAnalytics: "Revenue & Profit Analytics",
@@ -203,7 +205,8 @@ address: "Address",
 commission: "Commission",
 status: "Status",
 actions: "Actions",
-
+"unlock": "Unlock",
+  "lock": "Lock",
 active: "Active",
 inactive: "Inactive",
 employee: "Employee",
@@ -221,7 +224,7 @@ cancel: "Cancel",
 save: "Save",
 statementOrders: "Statement Orders",
 total: "Total",
-
+  "searchFileOrDate": "Search by file name or date",
 searchPlaceholder: "Search by customer, phone, restaurant...",
 searchButton: "Search",
 totalSales:"Total Sales",
@@ -293,6 +296,7 @@ companyCommission: "عمولة الشركة",
 commissionDescription: "وصف العمولة",
 cancelReason: "سبب الإلغاء",
 status: "الحالة",
+RestaurantDetails:"بيانات المطعم",
 employeeNote: "ملاحظة الموظف",
 accountantNote: "ملاحظة المحاسب",
 tariff: "التعرفة",
@@ -356,7 +360,7 @@ restaurants: "المطاعم",
 drivers: "السائقين",
 date: "التاريخ",
 action: "الإجراء",
-
+  lastOrder: "آخر طلب",
 view: "عرض",
 loading: "جاري التحميل...",
         driverStatement: "كشف السائق",
@@ -406,7 +410,9 @@ errorAddPayment: "فشل إضافة الدفعة",
 excelImportCenter: "مركز استيراد الإكسل",
 uploadExcelDescription:
   "ارفع ملفات الإكسل الخاصة بالتوصيل وسيتم إنشاء الطلبات والمطاعم والسائقين تلقائياً.",
-
+ "unlock": "فتح",
+  "lock": "إغلاق",
+  "delete": "حذف",
 uploadExcelFile: "رفع ملف إكسل",
 supportedFormats: "الصيغ المدعومة: xls / xlsx",
 chooseFile: "اختيار ملف",
@@ -443,7 +449,8 @@ deleteUser: "حذف المستخدم",
 deleteThisUser: "هل تريد حذف هذا المستخدم؟",
 failed: "فشل",
 restaurantDashboard: "لوحة المطعم",
-
+open:"فتح",
+closed:"اغلاق",
 restaurantDetailsSubtitle:
   "متابعة الطلبات والإحصائيات الخاصة بالمطعم",
 
@@ -469,7 +476,7 @@ companyTariffTotal:
 
 totalAccountingCompensation:
   "مجموع تعويض المحاسبة",
-
+ "searchFileOrDate": "بحث باسم الملف أو التاريخ",
 customer: "الزبون",
 
 noOrdersDuringPeriod:
