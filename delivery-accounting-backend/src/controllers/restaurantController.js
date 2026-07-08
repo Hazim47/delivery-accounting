@@ -91,9 +91,9 @@ const totalTariff = orders.reduce(
   (sum, order) => sum + Number(order.tariff || 0),
   0
 );
-const totalAccountingCompensation = orders.reduce(
+const totalAccountingDepartment= orders.reduce(
   (sum, order) =>
-    sum + Number(order.accountingCompensation || 0),
+    sum + Number(order.AccountingDepartment || 0),
   0
 );
     const totalCaptainDiscount = orders.reduce(
@@ -114,7 +114,7 @@ const totalAccountingCompensation = orders.reduce(
         totalCaptainDiscount,
         restaurantNet,
         totalTariff,
-        totalAccountingCompensation,
+        totalAccountingDepartment,
       },
       orders,
     });

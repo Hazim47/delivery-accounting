@@ -125,7 +125,7 @@ const getOverviewStats = async (req, res) => {
   totalProfit,
   totalExpenses,
   totalDriverPayments,
-  totalAccountingCompensation,
+  totalAccountingDepartment,
 ] = await Promise.all([
   Restaurant.count(),
   Driver.count(),
@@ -147,7 +147,7 @@ const getOverviewStats = async (req, res) => {
 
   DriverPayment.sum("amount"),
 
- Order.sum("accountingCompensation", {
+ Order.sum("AccountingDepartment", {
   where: {
     status: "DELIVERED",
   },
@@ -169,8 +169,8 @@ const getOverviewStats = async (req, res) => {
       totalExpenses: expenses,
       totalProfit: profit,
       totalDriverPayments: driverPayments,
-      totalAccountingCompensation:
-  totalAccountingCompensation || 0,
+      totalAccountingDepartment:
+  totalAccountingDepartment || 0,
     totalTariff: totalTariff || 0,
       netProfit,
       

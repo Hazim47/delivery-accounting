@@ -8,6 +8,31 @@ const Order = require("../models/Order");
 const Restaurant = require("../models/Restaurant");
 const Driver = require("../models/Driver");
 
+
+const parseExcelTime = (value) => {
+  if (value === null || value === undefined || value === "") return "";
+
+  // إذا كان نصاً
+  if (typeof value === "string") {
+    return value.trim();
+  }
+
+  // إذا كان رقم Excel
+  if (typeof value === "number") {
+    const t = XLSX.SSF.parse_date_code(value);
+
+    if (!t) return "";
+
+    const h = String(t.H).padStart(2, "0");
+    const m = String(t.M).padStart(2, "0");
+    const s = String(t.S).padStart(2, "0");
+
+    return `${h}:${m}:${s}`;
+  }
+
+  return "";
+};
+
 const importOrdersExcel = async (req, res) => {
   const transaction =
     await sequelize.transaction();
@@ -20,8 +45,13 @@ const importOrdersExcel = async (req, res) => {
       });
     }
 
-    const workbook =
-      XLSX.readFile(req.file.path);
+    const workbook = XLSX.readFile(req.file.path, {
+  cellDates: false,
+  cellFormula: false,
+  cellHTML: false,
+  cellNF: false,
+  cellStyles: false,
+});
 
     const sheet =
       workbook.Sheets[
@@ -32,8 +62,13 @@ const toNumber = (val) => {
   const num = Number(val);
   return isNaN(num) ? 0 : num;
 };
-    const rows =
-      XLSX.utils.sheet_to_json(sheet);
+    const rows = XLSX.utils.sheet_to_json(sheet, {
+  raw: true,
+  defval: "",
+  blankrows: false,
+}).filter(row =>
+  Object.values(row).some(value => String(value).trim() !== "")
+);
 
     const importLog =
       await ImportLog.create(
@@ -199,11 +234,11 @@ if (date.includes("-")) {
       const orderNumber = String(
         row["رقم الطلب"] || ""
       ).trim();
-
-      if (!orderNumber) {
-        skipped++;
-        continue;
-      }
+if (!orderNumber) {
+  skipped++;
+  continue;
+}
+     
       let restaurant = null;
 
       const restaurantName =
@@ -323,11 +358,9 @@ if (date.includes("-")) {
           row[
             "منطقة الزبون"
           ] || "",
-startTime:
-  row["وقت البدايه"] || "",
+startTime: parseExcelTime(row["وقت البدايه"]),
 
-endTime:
-  row["وقت النهايه"] || "",
+endTime: parseExcelTime(row["وقت النهايه"]),
 
 branchName:
   row["الفرع"] || "",
@@ -349,20 +382,19 @@ cancelReason:
   row["سبب الالغاء"] || "",
 
 companyCommission:
-  Number(
-    row["العموله"]
-  ) || 0,
+  toNumber(row["العموله"]),
 
 commissionDescription:
   row["وصف العموله"] || "",
-  accountingCompensation:
-  toNumber(row["تعويض المحاسبه"]),
+AccountingDepartment:
+  toNumber(
+    row["قسم المحاسبة"] ??
+    row["قسم المحاسبه"] ??
+    row["تعويض المحاسبه"] ??
+    row["تعويض المحاسبة"]
+  ),
         orderAmount:
-          Number(
-            row[
-              "قيمة الطلب"
-            ]
-          ) || 0,
+         toNumber(row["قيمة الطلب"]),
 
         deliveryFee,
 
@@ -386,10 +418,13 @@ orderDate,
   row["رقم الفاتورة"] || "",
 
 employeeNote:
-  row["ملاحظة الموظف"] || "",
+  row["ملاحظات"] ||
+  row["ملاحظه موظف"] ||
+  row["ملاحظة موظف"] ||
+  "",
 
 accountantNote:
-  row["ملاحظة المحاسب"] || "",
+  row["ملاحظات المحاسب"] || "",
 
 RestaurantId:
   restaurant?.id || null,
@@ -407,6 +442,9 @@ DriverId:
       await Order.bulkCreate(ordersToInsert, {
   transaction,
   validate: false,
+  hooks: false,
+  individualHooks: false,
+  returning: false,
 });
     }
 
@@ -459,7 +497,7 @@ DriverId:
   } catch (error) {
 
 
-    console.log(error);
+    console.error(error);
 
     return res.status(500).json({
       message:
@@ -474,9 +512,7 @@ DriverId:
         req.file.path
       )
     ) {
-      fs.unlinkSync(
-        req.file.path
-      );
+      await fs.promises.unlink(req.file.path);
     }
   }
 };

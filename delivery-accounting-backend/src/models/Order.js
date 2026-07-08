@@ -45,6 +45,10 @@ const Order = sequelize.define(
   type: DataTypes.DECIMAL(10, 2),
   defaultValue: 0,
 },
+AccountingDepartment: {
+  type: DataTypes.DECIMAL(10, 2),
+  defaultValue: 0,
+},
 isArchived: {
   type: DataTypes.BOOLEAN,
   defaultValue: false,
