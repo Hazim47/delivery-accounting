@@ -23,10 +23,9 @@ const storage = multer.diskStorage({
   },
 
   filename: (req, file, cb) => {
-    // 🔥 أقوى fix للعربي
-    const decodedName = Buffer.from(file.originalname, "latin1").toString("utf8");
+    const ext = require("path").extname(file.originalname);
 
-    cb(null, `${Date.now()}-${decodedName}`);
+    cb(null, `${Date.now()}${ext}`);
   },
 });
 

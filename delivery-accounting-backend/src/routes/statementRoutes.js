@@ -1,6 +1,5 @@
 const express =
   require("express");
-
 const router =
   express.Router();
 const { authMiddleware } = require("../middleware/authMiddleware");
@@ -12,7 +11,7 @@ const {
   toggleStatementLock,
   checkStatementLocked,
   updateOrderField,
-  createOrderInStatement
+  createOrderInStatement,
 } = require(
   "../controllers/statementController"
 );
@@ -67,5 +66,4 @@ router.post(
   authMiddleware,
   createOrderInStatement
 );
-
 module.exports = router;

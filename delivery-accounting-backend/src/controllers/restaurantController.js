@@ -1,6 +1,7 @@
 const Restaurant = require("../models/Restaurant");
 const { Op } = require("sequelize");
 const Order = require("../models/Order");
+const sequelize = require("../config/database");
 // إضافة مطعم
 const createRestaurant = async (req, res) => {
   try {
@@ -158,7 +159,20 @@ const getRestaurantById = async (req, res) => {
 const getRestaurants = async (req, res) => {
   try {
 const restaurants = await Restaurant.findAll({
-  order: [["createdAt", "DESC"]],
+  attributes: {
+    include: [
+      [
+        sequelize.literal(`(
+          SELECT "orderDate"
+          FROM "Orders"
+          WHERE "Orders"."RestaurantId" = "Restaurant"."id"
+          ORDER BY "orderDate" DESC
+          LIMIT 1
+        )`),
+        "lastOrderDate",
+      ],
+    ],
+  },
 });
 
 res.json({

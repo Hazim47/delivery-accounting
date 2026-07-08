@@ -65,105 +65,180 @@ const deleteImportLog = async (req, res) => {
   const transaction = await sequelize.transaction();
 
   try {
+
     const logId = req.params.id;
 
-    // 1️⃣ GET LOG
-    const log = await ImportLog.findByPk(logId, { transaction });
 
-    if (!log) {
+    const log = await ImportLog.findByPk(logId,{
+      transaction
+    });
+
+
+    if(!log){
       await transaction.rollback();
+
       return res.status(404).json({
-        message: "Import not found",
+        message:"Import not found"
       });
     }
 
-    // 2️⃣ GET ONLY NEEDED DATA (NO HEAVY INCLUDE)
+
+
+    // جيب الطلبات لهذا الملف فقط
     const orders = await Order.findAll({
-      where: { ImportLogId: log.id },
-      transaction,
-      attributes: ["id", "DriverId", "driverEarning", "RestaurantId"],
+      where:{
+        ImportLogId:logId
+      },
+      attributes:[
+        "DriverId",
+        "driverEarning"
+      ],
+      transaction
     });
 
-    // 3️⃣ AGGREGATE DRIVER EARNINGS (FAST)
-    const driverEarningsMap = {};
 
-    for (const order of orders) {
-      if (!order.DriverId) continue;
 
-      driverEarningsMap[order.DriverId] =
-        (driverEarningsMap[order.DriverId] || 0) +
+    // نقص أرباح السائقين
+    const driverMap={};
+
+
+    orders.forEach(order=>{
+
+      if(order.DriverId){
+
+        driverMap[order.DriverId] =
+        (driverMap[order.DriverId] || 0)
+        +
         Number(order.driverEarning || 0);
-    }
 
-    // 4️⃣ BULK UPDATE DRIVERS (NO LOOPS WITH SAVE)
-    const driverIds = Object.keys(driverEarningsMap);
+      }
 
-    for (const driverId of driverIds) {
+    });
+
+
+
+    for(const driverId in driverMap){
+
       await Driver.decrement(
-        { totalEarnings: driverEarningsMap[driverId] },
-        { where: { id: driverId }, transaction }
+        {
+          totalEarnings:driverMap[driverId]
+        },
+        {
+          where:{
+            id:driverId
+          },
+          transaction
+        }
       );
+
     }
 
-    // 5️⃣ DELETE ORDERS IN ONE QUERY
+
+
+    // احذف الطلبات فقط
     await Order.destroy({
-      where: { ImportLogId: log.id },
-      transaction,
+
+      where:{
+        ImportLogId:logId
+      },
+
+      transaction
+
     });
 
-    // 6️⃣ CLEAN ORPHAN DRIVERS (SAFE + FAST)
+
+
+    /*
+      مهم:
+      لا نحذف السائقين والمطاعم مباشرة
+      نفحص هل مستخدمين في ملفات ثانية
+    */
+
+
+
     await Driver.destroy({
-      where: {
-        id: {
-          [Op.notIn]: sequelize.literal(`
-            (SELECT DISTINCT "DriverId"
-             FROM "Orders"
-             WHERE "DriverId" IS NOT NULL)
-          `),
-        },
+
+      where:{
+        id:{
+          [Op.notIn]:sequelize.literal(`
+            (
+              SELECT DISTINCT "DriverId"
+              FROM "Orders"
+              WHERE "DriverId" IS NOT NULL
+            )
+          `)
+        }
       },
-      transaction,
+
+      transaction
+
     });
 
-    // 7️⃣ CLEAN ORPHAN RESTAURANTS
+
+
     await Restaurant.destroy({
-      where: {
-        id: {
-          [Op.notIn]: sequelize.literal(`
-            (SELECT DISTINCT "RestaurantId"
-             FROM "Orders"
-             WHERE "RestaurantId" IS NOT NULL)
-          `),
-        },
+
+      where:{
+        id:{
+          [Op.notIn]:sequelize.literal(`
+            (
+              SELECT DISTINCT "RestaurantId"
+              FROM "Orders"
+              WHERE "RestaurantId" IS NOT NULL
+            )
+          `)
+        }
       },
-      transaction,
+
+      transaction
+
     });
 
-    // 8️⃣ DELETE IMPORT LOG
+
+
+    // حذف ملف الاستيراد
     await ImportLog.destroy({
-      where: { id: log.id },
-      transaction,
+
+      where:{
+        id:logId
+      },
+
+      transaction
+
     });
 
-    // 9️⃣ COMMIT
+
+
     await transaction.commit();
 
-    return res.json({
-      success: true,
-      message: "Import deleted successfully",
+
+    res.json({
+
+      success:true,
+
+      message:"Deleted successfully"
+
     });
-  } catch (error) {
+
+
+
+  }catch(error){
+
     await transaction.rollback();
 
-    console.log("DELETE IMPORT ERROR:", error);
+    console.log(error);
 
-    return res.status(500).json({
-      message: "Delete failed",
-      error: error.message,
+
+    res.status(500).json({
+
+      message:"Delete failed",
+
+      error:error.message
+
     });
+
   }
 };
-
 module.exports = {
   getImportLogs,
   deleteImportLog,

@@ -1,8 +1,6 @@
 const { Op } = require("sequelize");
-
 const Order = require("../models/Order");
 const ImportLog = require("../models/ImportLog");
-
 const getStatements = async (req, res) => {
   try {
     const page = Number(req.query.page) || 1;

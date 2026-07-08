@@ -16,7 +16,7 @@ const getDailyStats = async (req, res) => {
 
     const stats = await Order.findOne({
       where: {
-        createdAt: { [Op.gte]: today },
+        orderDate: { [Op.gte]: today },
         status: "DELIVERED",
       },
       attributes: [
@@ -55,7 +55,7 @@ const getMonthlyStats = async (req, res) => {
 
     const stats = await Order.findOne({
       where: {
-        createdAt: { [Op.gte]: startOfMonth },
+        orderDate: { [Op.gte]: startOfMonth },
         status: "DELIVERED",
       },
       attributes: [
@@ -147,7 +147,11 @@ const getOverviewStats = async (req, res) => {
 
   DriverPayment.sum("amount"),
 
-  Order.sum("accountingCompensation"),
+ Order.sum("accountingCompensation", {
+  where: {
+    status: "DELIVERED",
+  },
+}),
 ]);
 
     const revenue = totalRevenue || 0;
@@ -188,7 +192,7 @@ const getRevenueChart = async (req, res) => {
         [
           Sequelize.fn(
             "TO_CHAR",
-            Sequelize.col("createdAt"),
+            Sequelize.col("orderDate"),
             "Mon"
           ),
           "month",
@@ -203,11 +207,11 @@ const getRevenueChart = async (req, res) => {
         ],
       ],
       group: [
-        Sequelize.fn("TO_CHAR", Sequelize.col("createdAt"), "Mon"),
+        Sequelize.fn("TO_CHAR", Sequelize.col("orderDate"), "Mon"),
       ],
       order: [
         [
-          Sequelize.fn("MIN", Sequelize.col("createdAt")),
+          Sequelize.fn("MIN", Sequelize.col("orderDate")),
           "ASC",
         ],
       ],

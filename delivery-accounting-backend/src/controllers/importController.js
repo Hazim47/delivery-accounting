@@ -34,9 +34,7 @@ const toNumber = (val) => {
 };
     const rows =
       XLSX.utils.sheet_to_json(sheet);
-console.log("========== EXCEL COLUMNS ==========");
-console.log(Object.keys(rows[0] || {}));
-console.log("===================================");
+
     const importLog =
       await ImportLog.create(
         {
@@ -108,21 +106,96 @@ const [
       new Map();
 
     const ordersToInsert = [];
+const parseExcelDate = (value) => {
+  if (!value) return null;
 
-    for (const row of rows) {
-      console.log(row["التاريخ"], typeof row["التاريخ"]); 
-      let orderDate = null;
+  const date = String(value).trim();
+
+ 
 
 
-if (row["التاريخ"]) {
-  const parts = String(row["التاريخ"])
-    .trim()
-    .split("/");
+  // 4/7/2026
+  if (date.includes("/")) {
+    const parts = date.split("/");
+
+    if (parts.length === 3) {
+      return new Date(
+        `${parts[2]}-${parts[1].padStart(2,"0")}-${parts[0].padStart(2,"0")}T00:00:00`
+      );
+    }
+  }
+
+
+  // 2026 يوليو 4
+  const arabicMonths = {
+    "يناير": "01",
+    "فبراير": "02",
+    "مارس": "03",
+    "أبريل": "04",
+    "مايو": "05",
+    "يونيو": "06",
+    "يوليو": "07",
+    "أغسطس": "08",
+    "سبتمبر": "09",
+    "أكتوبر": "10",
+    "نوفمبر": "11",
+    "ديسمبر": "12",
+  };
+
+
+  const parts = date.split(/\s+/);
+
 
   if (parts.length === 3) {
-    orderDate = new Date(`${parts[2]}-${parts[1]}-${parts[0]}T00:00:00`);
+
+    const year = parts[0];
+    const month = arabicMonths[parts[1]];
+    const day = parts[2];
+
+
+    if (year && month && day) {
+      return new Date(
+        `${year}-${month}-${day.padStart(2,"0")}T00:00:00`
+      );
+    }
+  }
+
+
+  // Excel serial date
+  if (!isNaN(value)) {
+
+    const excelDate =
+      XLSX.SSF.parse_date_code(value);
+
+    if (excelDate) {
+      return new Date(
+        excelDate.y,
+        excelDate.m - 1,
+        excelDate.d
+      );
+    }
+  }
+
+// صيغة 2026-07-04
+if (date.includes("-")) {
+
+  const parts = date.split("-");
+
+  if (parts.length === 3) {
+    return new Date(
+      `${parts[0]}-${parts[1]}-${parts[2]}T00:00:00`
+    );
   }
 }
+  return null;
+};
+    for (const row of rows) {
+
+
+
+  let orderDate =
+    parseExcelDate(row["التاريخ"]);
+
       const orderNumber = String(
         row["رقم الطلب"] || ""
       ).trim();
@@ -282,6 +355,8 @@ companyCommission:
 
 commissionDescription:
   row["وصف العموله"] || "",
+  accountingCompensation:
+  toNumber(row["تعويض المحاسبه"]),
         orderAmount:
           Number(
             row[
@@ -308,21 +383,19 @@ commissionDescription:
           driverName,
 orderDate,
         invoiceNumber:
-          row[
-            "رقم الفاتورة"
-          ] || "",
+  row["رقم الفاتورة"] || "",
 
-        employeeNote: "",
+employeeNote:
+  row["ملاحظة الموظف"] || "",
 
-        accountantNote: "",
+accountantNote:
+  row["ملاحظة المحاسب"] || "",
 
-        RestaurantId:
-          restaurant?.id ||
-          null,
+RestaurantId:
+  restaurant?.id || null,
 
-        DriverId:
-          driver?.id ||
-          null,
+DriverId:
+  driver?.id || null,
       });
 
       imported++;
@@ -384,7 +457,7 @@ orderDate,
       driversCreated,
     });
   } catch (error) {
-    console.log("IMPORT ERROR:", error.message);
+
 
     console.log(error);
 
