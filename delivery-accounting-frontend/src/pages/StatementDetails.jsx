@@ -45,7 +45,7 @@ const EDITABLE_FIELDS = [
 "orderDate",
 "startTime",
 "endTime",
-"accountingCompensation",
+"AccountingDepartment",
 ];
 
 function StatementDetails() {
@@ -367,9 +367,9 @@ useEffect(() => {
 
 {
   field: "employeeNote",
-  headerName: t("employeeNote"),
+  headerName: t("Note"),
   width: 300,
-  editable: () => canEdit("employeeNote"),
+  editable: () => canEdit("Note"),
   cellEditor: "agLargeTextCellEditor",
   cellEditorPopup: true,
   cellEditorParams: {
@@ -391,10 +391,10 @@ useEffect(() => {
   },
 },
 {
-  field: "accountingCompensation",
-  headerName: t("accountingCompensation"),
+ field: "AccountingDepartment",
+headerName: t("AccountingDepartment"),
   width: 170,
-  editable: () => canEdit("accountingCompensation"),
+  editable: () => canEdit("AccountingDepartment"),
   valueFormatter: (params) =>
     Number(params.value || 0).toFixed(2),
 },

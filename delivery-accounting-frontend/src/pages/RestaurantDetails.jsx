@@ -561,7 +561,7 @@ return (
         mb: 1,
       }}
     >
-     💵 {t("accountingCompensation")}
+     💵 {t("AccountingDepartment")}
     </Typography>
 
     <Typography
@@ -571,7 +571,7 @@ return (
         color: "#fff",
       }}
     >
-      {Number(stats.totalAccountingCompensation || 0).toFixed(2)} JD
+      {Number(stats.totalAccountingDepartment || 0).toFixed(2)} JD
     </Typography>
 
     <Typography
@@ -580,7 +580,7 @@ return (
         color: "#9ca3af",
       }}
     >
-     {t("totalAccountingCompensation")}
+     {t("totalAccountingDepartment")}
     </Typography>
   </Paper>
 </Grid>
@@ -660,7 +660,7 @@ return (
     fontWeight: 900,
   }}
 >
- {t("accountingCompensation")}
+ {t("AccountingDepartment")}
 </TableCell>
 
               <TableCell
@@ -760,7 +760,7 @@ return (
     color: "#c084fc",
   }}
 >
-  {Number(order.accountingCompensation || 0).toFixed(2)} JD
+  {Number(order.AccountingDepartment || 0).toFixed(2)} JD
 </TableCell>
                 <TableCell>
                   <Chip

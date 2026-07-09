@@ -134,9 +134,9 @@ function Dashboard() {
   icon={<LocalAtmIcon />}
 />
         <StatCard
-          title={t("accountingCompensation")}
+          title={t("AccountingDepartment")}
           value={`${Number(
-            stats?.totalAccountingCompensation || 0
+            stats?.totalAccountingDepartment || 0
           ).toFixed(2)} JD`}
           icon={<SavingsIcon />}
         />

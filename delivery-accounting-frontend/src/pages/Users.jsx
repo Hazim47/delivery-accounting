@@ -230,15 +230,15 @@ const permissionFields = [
   },
   {
     key: "employeeNote",
-    label: t("employeeNote"),
+    label: t("Note"),
   },
   {
     key: "accountantNote",
     label: t("accountantNote"),
   },
   {
-  key: "accountingCompensation",
-  label: t("accountingCompensation"),
+  key: "AccountingDepartment",
+  label: t("AccountingDepartment"),
 },
 ];
 return (
