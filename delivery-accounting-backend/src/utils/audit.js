@@ -1,7 +1,7 @@
 const AuditLog = require("../models/AuditLog");
 
 const createAuditLog = async (data) => {
-  console.log("AUDIT CALLED:", data);
+ 
 
   const log = await AuditLog.create({
     orderId: data.orderId,
@@ -14,7 +14,7 @@ const createAuditLog = async (data) => {
     newValue: data.newValue,
   });
 
-  console.log("AUDIT SAVED:", log.id);
+ 
 };
 
 module.exports = { createAuditLog };

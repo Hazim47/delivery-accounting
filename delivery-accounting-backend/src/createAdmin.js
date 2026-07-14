@@ -24,7 +24,7 @@ async function createAdmin() {
       role: "ADMIN",
     });
 
-    console.log("Admin created successfully");
+    
   } catch (err) {
     console.error(err);
   }

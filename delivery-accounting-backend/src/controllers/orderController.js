@@ -180,7 +180,7 @@ const updateOrderStatus = async (req, res) => {
    UPDATE NOTES + FIELDS
 ========================================================= */
 const updateOrderNotes = async (req, res) => {
-  console.log("UPDATE NOTES HIT");
+
 
   try {
     const { id } = req.params;
@@ -212,9 +212,7 @@ const updateOrderNotes = async (req, res) => {
       });
     }
 
-    console.log("BODY:", req.body);
-    console.log("ROLE:", user.role);
-    console.log("PERMISSIONS:", user.permissions);
+  
 
     // الأدمن يستطيع تعديل كل شيء
     let allowedFields = [];
@@ -227,7 +225,7 @@ const updateOrderNotes = async (req, res) => {
       );
     }
 
-    console.log("Allowed Fields:", allowedFields);
+ 
 
     for (const field of allowedFields) {
       if (!(field in req.body)) continue;
@@ -252,7 +250,7 @@ const updateOrderNotes = async (req, res) => {
 
     await order.save();
 
-    console.log("ORDER SAVED");
+  
 
     res.json({
       message: "Order updated successfully",

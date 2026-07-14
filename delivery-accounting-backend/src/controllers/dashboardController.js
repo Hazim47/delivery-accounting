@@ -116,68 +116,90 @@ const getGeneralStats = async (req, res) => {
 ========================= */
 const getOverviewStats = async (req, res) => {
   try {
-   const [
-  totalRestaurants,
-  totalDrivers,
-  totalOrders,
-  totalRevenue,
-  totalTariff,
-  totalProfit,
-  totalExpenses,
-  totalDriverPayments,
-  totalAccountingDepartment,
-] = await Promise.all([
-  Restaurant.count(),
-  Driver.count(),
-  Order.count(),
+    const [
+      totalRestaurants,
+      totalDrivers,
+      orderStats,
+      totalExpenses,
+      totalDriverPayments,
+    ] = await Promise.all([
+      Restaurant.count(),
 
-  Order.sum("orderAmount", {
-    where: { status: "DELIVERED" },
-  }),
+      Driver.count(),
 
-  Order.sum("tariff", {
-    where: { status: "DELIVERED" },
-  }),
+      Order.findOne({
+        where: {
+          status: "DELIVERED",
+        },
+        attributes: [
+          [
+            Sequelize.fn("COUNT", Sequelize.col("id")),
+            "totalOrders",
+          ],
+          [
+            Sequelize.fn("COALESCE",
+              Sequelize.fn("SUM", Sequelize.col("orderAmount")),
+              0
+            ),
+            "totalRevenue",
+          ],
+          [
+            Sequelize.fn("COALESCE",
+              Sequelize.fn("SUM", Sequelize.col("tariff")),
+              0
+            ),
+            "totalTariff",
+          ],
+          [
+            Sequelize.fn("COALESCE",
+              Sequelize.fn("SUM", Sequelize.col("companyCommission")),
+              0
+            ),
+            "totalProfit",
+          ],
+          [
+            Sequelize.fn("COALESCE",
+              Sequelize.fn("SUM", Sequelize.col("AccountingDepartment")),
+              0
+            ),
+            "totalAccountingDepartment",
+          ],
+        ],
+        raw: true,
+      }),
 
-  Order.sum("companyCommission", {
-    where: { status: "DELIVERED" },
-  }),
+      Expense.sum("amount"),
 
-  Expense.sum("amount"),
+      DriverPayment.sum("amount"),
+    ]);
 
-  DriverPayment.sum("amount"),
-
- Order.sum("AccountingDepartment", {
-  where: {
-    status: "DELIVERED",
-  },
-}),
-]);
-
-    const revenue = totalRevenue || 0;
-    const profit = totalProfit || 0;
-    const expenses = totalExpenses || 0;
-    const driverPayments = totalDriverPayments || 0;
-
-    const netProfit = profit - expenses - driverPayments;
+    const totalRevenue = Number(orderStats.totalRevenue);
+    const totalProfit = Number(orderStats.totalProfit);
+    const totalExpensesValue = Number(totalExpenses || 0);
+    const totalDriverPaymentsValue = Number(totalDriverPayments || 0);
 
     res.json({
-      totalOrders,
-      totalDrivers,
       totalRestaurants,
-      totalRevenue: revenue,
-      totalExpenses: expenses,
-      totalProfit: profit,
-      totalDriverPayments: driverPayments,
-      totalAccountingDepartment:
-  totalAccountingDepartment || 0,
-    totalTariff: totalTariff || 0,
-      netProfit,
-      
+      totalDrivers,
+      totalOrders: Number(orderStats.totalOrders),
+      totalRevenue,
+      totalTariff: Number(orderStats.totalTariff),
+      totalProfit,
+      totalAccountingDepartment: Number(
+        orderStats.totalAccountingDepartment
+      ),
+      totalExpenses: totalExpensesValue,
+      totalDriverPayments: totalDriverPaymentsValue,
+      netProfit:
+        totalProfit -
+        totalExpensesValue -
+        totalDriverPaymentsValue,
     });
   } catch (error) {
-    console.log(error);
-    res.status(500).json({ message: "Server Error" });
+    console.error(error);
+    res.status(500).json({
+      message: "Server Error",
+    });
   }
 };
 

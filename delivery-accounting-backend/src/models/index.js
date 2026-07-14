@@ -16,7 +16,13 @@ Order.hasMany(AuditLog, {
   foreignKey: "orderId",
   onDelete: "CASCADE",
 });
+Restaurant.hasMany(Order, {
+  foreignKey: "RestaurantId"
+});
 
+Order.belongsTo(Restaurant, {
+  foreignKey: "RestaurantId"
+});
 AuditLog.belongsTo(Order, {
   foreignKey: "orderId",
 });

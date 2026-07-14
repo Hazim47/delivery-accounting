@@ -14,7 +14,10 @@ const Restaurant = sequelize.define("Restaurant", {
   address: {
     type: DataTypes.STRING,
   },
-
+lastOrderDate: {
+ type: DataTypes.DATE,
+ allowNull:true
+},
   commissionRate: {
     type: DataTypes.DECIMAL(5, 2),
     defaultValue: 10,

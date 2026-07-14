@@ -33,24 +33,27 @@ const parseExcelTime = (value) => {
   return "";
 };
 
-const importOrdersExcel = async (req, res) => {
-  const transaction =
-    await sequelize.transaction();
+const importOrdersExcel = async (req,res)=>{
 
-  try {
-    if (!req.file) {
-      return res.status(400).json({
-        message:
-          "Excel file is required",
-      });
-    }
+let transaction;
 
-    const workbook = XLSX.readFile(req.file.path, {
+try{
+
+if(!req.file){
+ return res.status(400).json({
+  message:"Excel file is required"
+ });
+}
+
+transaction = await sequelize.transaction();
+
+const workbook = XLSX.readFile(req.file.path, {
   cellDates: false,
   cellFormula: false,
   cellHTML: false,
   cellNF: false,
   cellStyles: false,
+  dense: true,
 });
 
     const sheet =
@@ -224,6 +227,7 @@ if (date.includes("-")) {
 }
   return null;
 };
+const restaurantLastDateMap = new Map();
     for (const row of rows) {
 
 
@@ -245,7 +249,24 @@ if (!orderNumber) {
         String(
           row["المطعم"] || ""
         ).trim();
+if (restaurantName && orderDate) {
 
+  const timestamp = new Date(orderDate).getTime();
+
+  const old = restaurantLastDateMap.get(restaurantName);
+
+  if (!old || timestamp > old.timestamp) {
+
+    restaurantLastDateMap.set(
+      restaurantName,
+      {
+        date: orderDate,
+        timestamp
+      }
+    );
+
+  }
+}
       if (restaurantName) {
         restaurant =
           restaurantMap.get(
@@ -254,20 +275,19 @@ if (!orderNumber) {
 
         if (!restaurant) {
           restaurant =
-            await Restaurant.create(
-              {
-                name:
-                  restaurantName,
+ await Restaurant.create(
+ {
+   name: restaurantName,
+   active:true,
+   lastOrderDate: orderDate,
+ },
+ {transaction}
+);
 
-                active: true,
-              },
-              { transaction }
-            );
-
-          restaurantMap.set(
-            restaurantName,
-            restaurant
-          );
+         restaurantMap.set(
+ restaurantName,
+ restaurant.dataValues || restaurant
+);
 
           restaurantsCreated++;
         }
@@ -436,18 +456,68 @@ DriverId:
       imported++;
     }
 
-    if (
-      ordersToInsert.length
-    ) {
-      await Order.bulkCreate(ordersToInsert, {
-  transaction,
-  validate: false,
-  hooks: false,
-  individualHooks: false,
-  returning: false,
-});
-    }
+if (ordersToInsert.length) {
 
+
+  const chunkSize = 500;
+
+  for (let i = 0; i < ordersToInsert.length; i += chunkSize) {
+    const chunk = ordersToInsert.slice(i, i + chunkSize);
+
+   await Order.bulkCreate(chunk, {
+  transaction,
+  validate:false,
+  hooks:false,
+  individualHooks:false,
+  returning:false,
+});
+  }
+
+}
+const restaurantUpdates = [];
+
+for (const [restaurantName, lastDate] of restaurantLastDateMap) {
+
+  const restaurant = restaurantMap.get(restaurantName);
+
+  if (!restaurant) continue;
+
+
+  // تحديث فقط إذا التاريخ الجديد أحدث
+ if(
+ lastDate.date &&
+ (
+  !restaurant.lastOrderDate ||
+  new Date(lastDate.date) > new Date(restaurant.lastOrderDate)
+ )
+){
+
+    restaurantUpdates.push(
+      Restaurant.update(
+        {
+          lastOrderDate: lastDate.date,
+        },
+        {
+          where:{
+            id: restaurant.id,
+          },
+          transaction,
+        }
+      )
+    );
+
+  }
+
+}
+
+
+for(let i = 0; i < restaurantUpdates.length; i += 500){
+
+  await Promise.all(
+    restaurantUpdates.slice(i, i + 500)
+  );
+
+}
     for (const [
       driverId,
       amount,
@@ -494,18 +564,19 @@ DriverId:
       restaurantsCreated,
       driversCreated,
     });
-  } catch (error) {
+  } catch(error){
 
+ if(transaction){
+   await transaction.rollback();
+ }
 
-    console.error(error);
+ console.error(error);
 
-    return res.status(500).json({
-      message:
-        "Import failed",
-      error:
-        error.message,
-    });
-  } finally {
+ return res.status(500).json({
+   message:"Import failed",
+   error:error.message
+ });
+}finally {
     if (
       req.file?.path &&
       fs.existsSync(

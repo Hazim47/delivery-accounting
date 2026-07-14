@@ -49,6 +49,10 @@ AccountingDepartment: {
   type: DataTypes.DECIMAL(10, 2),
   defaultValue: 0,
 },
+lastOrderDate: {
+  type: DataTypes.DATE,
+  allowNull: true,
+},
 isArchived: {
   type: DataTypes.BOOLEAN,
   defaultValue: false,
@@ -190,6 +194,9 @@ invoiceNumber: {
       {
         fields: ["status"],
       },
+      {
+   fields:["RestaurantId","orderDate"]
+ },
       {
         fields: ["createdAt"],
       },

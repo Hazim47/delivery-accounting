@@ -34,7 +34,7 @@ function RestaurantDetails() {
   const [orders, setOrders] = useState([]);
 const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-
+  const [page, setPage] = useState(1);
   const [fromDate, setFromDate] = useState(null);
 const [toDate, setToDate] = useState(null);
 
@@ -50,9 +50,9 @@ const fetchRestaurant = useCallback(async () => {
       params.append("to", format(toDate, "yyyy-MM-dd"));
     }
 
-    const url = `/restaurants/${id}/details${
-      params.toString() ? `?${params.toString()}` : ""
-    }`;
+   params.append("page", page);
+
+const url = `/restaurants/${id}/details?${params.toString()}`;
 
     const res = await API.get(url);
 
@@ -64,20 +64,21 @@ const fetchRestaurant = useCallback(async () => {
   } finally {
     setLoading(false);
   }
-}, [id, fromDate, toDate]);
+}, [id, fromDate, toDate, page]);
 
 useEffect(() => {
   fetchRestaurant();
 }, [fetchRestaurant]);
 
-const handleSearch = async () => {
+const handleSearch = () => {
   if (fromDate && toDate && fromDate > toDate) {
     alert(t("invalidDateRange"));
     return;
   }
 
   setLoading(true);
-  await fetchRestaurant();
+  setPage(1);
+  fetchRestaurant();
 };
   if (loading) {
   return (
@@ -542,18 +543,34 @@ return (
         </Paper>
       </Grid>
       <Grid item xs={12} md={4}>
-  <Paper
-    elevation={0}
-    sx={{
-      p: 3,
-      height: "100%",
-      borderRadius: "24px",
-      background:
-        "linear-gradient(145deg,rgba(168,85,247,.15),rgba(255,255,255,.04))",
-      border: "1px solid rgba(168,85,247,.25)",
-      backdropFilter: "blur(18px)",
-    }}
-  >
+<Paper
+ elevation={0}
+ sx={{
+   p:3,
+   height:"100%",
+   borderRadius:"24px",
+
+   background:
+    "linear-gradient(145deg,rgba(168,85,247,.15),rgba(255,255,255,.04))",
+
+   border:
+    "1px solid rgba(168,85,247,.25)",
+
+   backdropFilter:
+    "blur(18px)",
+
+   transition:".35s",
+
+   boxShadow:
+    "0 20px 50px rgba(168,85,247,.12)",
+
+   "&:hover":{
+      transform:"translateY(-6px)",
+      boxShadow:
+       "0 25px 60px rgba(168,85,247,.3)",
+   },
+ }}
+>
     <Typography
       sx={{
         color: "#d8b4fe",
@@ -599,6 +616,7 @@ return (
         boxShadow: "0 25px 60px rgba(0,0,0,.45)",
       }}
     >
+      
       <TableContainer>
         <Table>
 
@@ -816,6 +834,112 @@ return (
         </TableBody>
       </Table>
     </TableContainer>
+   <Box
+  sx={{
+    display: "flex",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 3,
+    p: 3,
+    mt: 2,
+  }}
+>
+
+<Button
+  variant="contained"
+  disabled={page === 1}
+  onClick={() => setPage(page - 1)}
+  sx={{
+    minWidth: 120,
+    height: 45,
+    borderRadius: "14px",
+    fontWeight: 800,
+    color: page === 1 ? "#6b7280" : "#000",
+
+    background:
+      page === 1
+        ? "rgba(255,255,255,.08)"
+        : "linear-gradient(135deg,#fde047,#facc15,#f59e0b)",
+
+    boxShadow:
+      page === 1
+        ? "none"
+        : "0 10px 30px rgba(250,204,21,.25)",
+
+    transition: ".3s",
+
+    "&:hover": {
+      transform: page === 1 ? "none" : "translateY(-3px)",
+      boxShadow:
+        page === 1
+          ? "none"
+          : "0 15px 40px rgba(250,204,21,.35)",
+    },
+  }}
+>
+  السابق
+</Button>
+
+
+<Box
+  sx={{
+    minWidth: 45,
+    height: 45,
+    borderRadius: "14px",
+    display: "flex",
+    justifyContent:"center",
+    alignItems:"center",
+
+    background:
+      "rgba(255,255,255,.06)",
+
+    border:
+      "1px solid rgba(250,204,21,.2)",
+
+    color:"#fde047",
+
+    fontWeight:900,
+    fontSize:18,
+
+    boxShadow:
+      "0 10px 30px rgba(0,0,0,.3)",
+  }}
+>
+ {page}
+</Box>
+
+
+<Button
+  variant="contained"
+  onClick={() => setPage(page + 1)}
+  sx={{
+    minWidth: 120,
+    height:45,
+    borderRadius:"14px",
+
+    fontWeight:800,
+    color:"#000",
+
+    background:
+      "linear-gradient(135deg,#fde047,#facc15,#f59e0b)",
+
+    boxShadow:
+      "0 10px 30px rgba(250,204,21,.25)",
+
+    transition:".3s",
+
+    "&:hover":{
+      transform:"translateY(-3px)",
+      boxShadow:
+       "0 15px 40px rgba(250,204,21,.4)",
+    }
+  }}
+>
+ التالي
+</Button>
+
+
+</Box>
   </Paper>
 
 </Box>

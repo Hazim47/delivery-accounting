@@ -30,7 +30,7 @@ const getRevenueChart = async (req, res) => {
       sales: Number(item.sales) || 0,
       tariff: Number(item.tariff) || 0,
     }));
-console.log(await Order.findAll({ raw: true }));
+
     res.json(clean);
   } catch (error) {
     console.error(error);

@@ -156,13 +156,13 @@ const updatePermissions = async (req, res) => {
 
   user.permissions = req.body.permissions;
 
-console.log(user.permissions);
+
 
 await user.save();
 
 const again = await User.findByPk(req.params.id);
 
-console.log(again.permissions);
+
 
     res.json({
       message: "Permissions updated",

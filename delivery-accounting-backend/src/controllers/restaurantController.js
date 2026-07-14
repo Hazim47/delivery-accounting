@@ -55,67 +55,119 @@ if (from && to) {
     [Op.lte]: to,
   };
 }
-// ======== أضفهم هنا ========
-console.log("FROM:", from);
-console.log("TO:", to);
-console.log("WHERE:", where);
 
-const sample = await Order.findOne();
-console.log("DATES IN DB SAMPLE:", sample);
 // ===========================
 
 // الطلبات
 let orders = [];
+let stats = {};
 
 try {
-  orders = await Order.findAll({
-    where,
-    order: [["orderDate", "DESC"]],
-  });
 
-  console.log("ORDERS FOUND:", orders.length);
+  const page = Number(req.query.page) || 1;
+  const limit = 100;
+  const offset = (page - 1) * limit;
+
+
+  [orders, stats] = await Promise.all([
+
+    Order.findAll({
+  where,
+  attributes: [
+    "id",
+    "orderDate",
+    "customerName",
+    "orderAmount",
+    "driverEarning",
+    "restaurantEarning",
+    "tariff",
+    "AccountingDepartment",
+    "status",
+  ],
+  order: [["orderDate", "DESC"]],
+  limit,
+  offset,
+  raw: true,
+}),
+
+
+    Order.findOne({
+      where,
+      attributes: [
+
+        [
+          sequelize.fn(
+            "COUNT",
+            sequelize.col("id")
+          ),
+          "totalOrders"
+        ],
+
+        [
+          sequelize.fn(
+            "SUM",
+            sequelize.col("orderAmount")
+          ),
+          "totalSales"
+        ],
+
+        [
+          sequelize.fn(
+            "SUM",
+            sequelize.col("tariff")
+          ),
+          "totalTariff"
+        ],
+
+        [
+          sequelize.fn(
+            "SUM",
+            sequelize.col("AccountingDepartment")
+          ),
+          "totalAccountingDepartment"
+        ],
+
+        [
+          sequelize.fn(
+            "SUM",
+            sequelize.col("driverEarning")
+          ),
+          "totalCaptainDiscount"
+        ],
+
+        [
+          sequelize.fn(
+            "SUM",
+            sequelize.col("restaurantEarning")
+          ),
+          "restaurantNet"
+        ],
+
+      ],
+      raw: true
+    })
+
+  ]);
+
+
 } catch (e) {
-  console.log("FIND ALL ERROR:");
+
+  console.log("RESTAURANT DETAILS ERROR:");
   console.log(e);
   throw e;
+
 }
-
-    // الإحصائيات
-    const totalOrders = orders.length;
-
-    const totalSales = orders.reduce(
-      (sum, order) => sum + Number(order.orderAmount || 0),
-      0
-    );
-const totalTariff = orders.reduce(
-  (sum, order) => sum + Number(order.tariff || 0),
-  0
-);
-const totalAccountingDepartment= orders.reduce(
-  (sum, order) =>
-    sum + Number(order.AccountingDepartment || 0),
-  0
-);
-    const totalCaptainDiscount = orders.reduce(
-      (sum, order) => sum + Number(order.driverEarning || 0),
-      0
-    );
-
-    const restaurantNet = orders.reduce(
-      (sum, order) => sum + Number(order.restaurantEarning || 0),
-      0
-    );
 
     res.json({
       restaurant,
-      stats: {
-        totalOrders,
-        totalSales,
-        totalCaptainDiscount,
-        restaurantNet,
-        totalTariff,
-        totalAccountingDepartment,
-      },
+     stats: {
+  totalOrders: Number(stats.totalOrders || 0),
+  totalSales: Number(stats.totalSales || 0),
+  totalCaptainDiscount: Number(stats.totalCaptainDiscount || 0),
+  restaurantNet: Number(stats.restaurantNet || 0),
+  totalTariff: Number(stats.totalTariff || 0),
+  totalAccountingDepartment: Number(stats.totalAccountingDepartment || 0),
+},
       orders,
     });
  
@@ -158,28 +210,38 @@ const getRestaurantById = async (req, res) => {
 // جلب كل المطاعم
 const getRestaurants = async (req, res) => {
   try {
-const restaurants = await Restaurant.findAll({
-  attributes: {
-    include: [
-      [
-        sequelize.literal(`(
-          SELECT "orderDate"
-          FROM "Orders"
-          WHERE "Orders"."RestaurantId" = "Restaurant"."id"
-          ORDER BY "orderDate" DESC
-          LIMIT 1
-        )`),
-        "lastOrderDate",
-      ],
-    ],
-  },
+
+   const restaurants = await Restaurant.findAll({
+  attributes: [
+    "id",
+    "name",
+    "phone",
+    "address",
+    "active",
+    "commissionRate",
+    "lastOrderDate",
+  ],
+  order: [
+    ["lastOrderDate", "DESC"],
+    ["name", "ASC"],
+  ],
+  raw: true,
 });
 
-res.json({
-  restaurants,
-});
+
+    res.json({
+      restaurants,
+    });
+
+
   } catch (error) {
-    res.status(500).json({ message: "Server Error" });
+
+    console.log(error);
+
+    res.status(500).json({
+      message:"Server Error"
+    });
+
   }
 };
 

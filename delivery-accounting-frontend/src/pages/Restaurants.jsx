@@ -28,7 +28,7 @@ function Restaurants() {
   const { t, i18n } = useTranslation();
 
   const [restaurants, setRestaurants] = useState([]);
-  const [filteredRestaurants, setFilteredRestaurants] = useState([]);
+  
 
   const [loading, setLoading] = useState(true);
 
@@ -44,9 +44,8 @@ function Restaurants() {
     try {
       const res = await API.get("/restaurants");
       const data = res.data.restaurants || [];
-
       setRestaurants(data);
-      setFilteredRestaurants(data);
+      
 
     } catch (err) {
       console.log(err);
@@ -63,19 +62,12 @@ function Restaurants() {
       SEARCH ONLY (NAME)
   ============================ */
 
-  useEffect(() => {
-
-    let data = [...restaurants];
-
-    if (search.trim()) {
-      data = data.filter((r) =>
-        r.name.toLowerCase().includes(search.toLowerCase())
-      );
-    }
-
-    setFilteredRestaurants(data);
-
-  }, [search, restaurants]);
+const filteredRestaurants =
+restaurants.filter((r)=>
+ r.name
+ .toLowerCase()
+ .includes(search.toLowerCase())
+);
     if (loading)
     return <h2>{t("loading")}</h2>;
 
@@ -311,29 +303,29 @@ function Restaurants() {
 
           {/* LAST ORDER */}
           <TableCell
-            align="center"
-            sx={{
-              color: "#d1d5db",
-              fontWeight: 600,
-              fontSize: 16,
-            }}
-          >
-            {r.lastOrderDate
-              ? new Date(
-                  r.lastOrderDate
-                ).toLocaleDateString(
-                  i18n.language === "ar"
-                    ? "ar-EG"
-                    : "en-US",
-                  {
-                    year: "numeric",
-                    month: "long",
-                    day: "numeric",
-                  }
-                )
-              : "-"
-            }
-          </TableCell>
+  align="center"
+  sx={{
+    color: "#d1d5db",
+    fontWeight: 600,
+    fontSize: 16,
+  }}
+>
+  {r.lastOrderDate
+    ? new Date(
+        String(r.lastOrderDate).substring(0,10) + "T12:00:00"
+      ).toLocaleDateString(
+        i18n.language === "ar"
+          ? "ar-EG"
+          : "en-US",
+        {
+          year: "numeric",
+          month: "long",
+          day: "numeric",
+        }
+      )
+    : "-"
+  }
+</TableCell>
 
 
 

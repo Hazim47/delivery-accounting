@@ -62,7 +62,7 @@ const [newPassword, setNewPassword] =
     try {
       const res =
         await API.get("/users");
-console.log(res.data);
+
       setUsers(res.data);
     } catch (err) {
       console.log(err);
@@ -452,11 +452,10 @@ return (
                       <IconButton
                         onClick={() => {
                           setSelectedPermissionsUser(user);
-                          console.log("USER:", user);
-                          console.log("PERMISSIONS FROM DB:", user.permissions);
+                
                           setPermissions(user.permissions || {});
                           setPermissionsOpen(true);
-                          console.log(user.permissions);
+                          
                         }}
                         sx={{
                           background: "rgba(99,102,241,0.15)",
@@ -1029,7 +1028,7 @@ return (
     permissions,
   }
 );
-console.log("SAVED:", permissions);
+
 await loadUsers();
 
 setPermissionsOpen(false);

@@ -20,6 +20,7 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import DeleteIcon from "@mui/icons-material/Delete";
+import { useMediaQuery } from "@mui/material";
 function Statements() {
   const navigate = useNavigate();
 const { t } = useTranslation();
@@ -29,7 +30,7 @@ const user = JSON.parse(localStorage.getItem("user"));
 const role = user?.role;
   const [statements, setStatements] =
     useState([]);
-
+const isMobile = useMediaQuery("(max-width:600px)");
   const [page, setPage] =
     useState(1);
 
@@ -220,7 +221,7 @@ return (
             t("restaurants"),
             t("drivers"),
             t("date"),
-            t("action"),
+            ...(isMobile ? [] : [t("action")])
           ].map((h) => (
             <TableCell
               key={h}
@@ -294,8 +295,9 @@ return (
               {new Date(statement.createdAt).toLocaleString()}
             </TableCell>
 
-            <TableCell>
-              <Box sx={{ display: "flex", gap: 1 }}>
+            {!isMobile && (
+<TableCell>
+  <Box sx={{ display: "flex", gap: 1 }}>
                 <Button
                   variant="contained"
                   startIcon={<VisibilityIcon />}
@@ -361,6 +363,67 @@ return (
     )}
               </Box>
             </TableCell>
+            )}
+            {isMobile && (
+<TableCell colSpan={8}>
+  <Box
+    sx={{
+      display:"flex",
+      gap:1,
+      mt:1,
+      flexWrap:"wrap"
+    }}
+  >
+
+<Button
+variant="contained"
+startIcon={<VisibilityIcon />}
+onClick={() => navigate(`/statements/${statement.id}`)}
+sx={{
+ flex:1,
+ borderRadius:"10px",
+ fontWeight:900,
+ background:"linear-gradient(135deg,#facc15,#f59e0b)",
+ color:"#000"
+}}
+>
+{t("view")}
+</Button>
+
+
+{role==="ADMIN" && (
+<Button
+variant="contained"
+color={statement.isLocked ? "success":"error"}
+onClick={()=>toggleLock(statement.id)}
+sx={{
+ flex:1,
+ borderRadius:"10px"
+}}
+>
+{statement.isLocked ? t("unlock"):t("lock")}
+</Button>
+)}
+
+
+{role==="ADMIN" && (
+<Button
+variant="contained"
+color="error"
+startIcon={<DeleteIcon />}
+onClick={()=>deleteStatement(statement.id)}
+sx={{
+ flex:1,
+ borderRadius:"10px"
+}}
+>
+{t("delete")}
+</Button>
+)}
+
+</Box>
+</TableCell>
+)}
           </TableRow>
         ))}
       </TableBody>
