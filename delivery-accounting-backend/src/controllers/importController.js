@@ -7,8 +7,10 @@ const ImportLog = require("../models/ImportLog");
 const Order = require("../models/Order");
 const Restaurant = require("../models/Restaurant");
 const Driver = require("../models/Driver");
-
-
+const DailyReport = require("../models/DailyReport");
+const {
+ generateDailyReports
+}=require("../services/dailyReportService");
 const parseExcelTime = (value) => {
   if (value === null || value === undefined || value === "") return "";
 
@@ -119,7 +121,8 @@ const [
 
     const driverMap =
       new Map();
-
+    const restaurantNames = new Set();
+const driverNames = new Set();
    
 
     existingRestaurants.forEach(
@@ -144,6 +147,7 @@ const [
       new Map();
 
     const ordersToInsert = [];
+    const dailyReportsMap = new Map();
 const parseExcelDate = (value) => {
   if (!value) return null;
 
@@ -234,6 +238,64 @@ const restaurantLastDateMap = new Map();
 
   let orderDate =
     parseExcelDate(row["التاريخ"]);
+    if(orderDate){
+
+  const dateKey = orderDate
+    .toISOString()
+    .split("T")[0];
+
+
+  if(!dailyReportsMap.has(dateKey)){
+    dailyReportsMap.set(dateKey,{
+  totalOrders:0,
+  totalRevenue:0,
+  totalProfit:0,
+  totalTariff:0,
+  totalAccounting:0,
+  drivers:new Set(),
+  restaurants:new Set()
+});
+  }
+
+
+  const report = dailyReportsMap.get(dateKey);
+
+
+  report.totalOrders++;
+report.totalRevenue += toNumber(row["قيمة الطلب"]);
+
+report.totalProfit += toNumber(row["العموله"]);
+  report.totalTariff += toNumber(
+    row["التعرفه"]
+  );
+
+
+  report.totalAccounting += toNumber(
+    row["قسم المحاسبة"] ??
+    row["قسم المحاسبه"] ??
+    row["تعويض المحاسبه"] ??
+    row["تعويض المحاسبة"]
+  );
+
+
+  const tempDriver =
+    String(row["الكابتن"] || "").trim();
+
+
+  const tempRestaurant =
+    String(row["المطعم"] || "").trim();
+
+
+  if(tempDriver){
+    report.drivers.add(tempDriver);
+  }
+
+
+  if(tempRestaurant){
+    report.restaurants.add(tempRestaurant);
+  }
+
+}
 
       const orderNumber = String(
         row["رقم الطلب"] || ""
@@ -249,6 +311,9 @@ if (!orderNumber) {
         String(
           row["المطعم"] || ""
         ).trim();
+        if (restaurantName) {
+  restaurantNames.add(restaurantName);
+}
 if (restaurantName && orderDate) {
 
   const timestamp = new Date(orderDate).getTime();
@@ -299,7 +364,9 @@ if (restaurantName && orderDate) {
         String(
           row["الكابتن"] || ""
         ).trim();
-
+if (driverName) {
+  driverNames.add(driverName);
+}
       if (driverName) {
         driver =
           driverMap.get(
@@ -472,7 +539,11 @@ if (ordersToInsert.length) {
   returning:false,
 });
   }
-
+await generateDailyReports(
+ transaction,
+ dailyReportsMap,
+ req.file.originalname
+);
 }
 const restaurantUpdates = [];
 
@@ -536,34 +607,33 @@ for(let i = 0; i < restaurantUpdates.length; i += 500){
       );
     }
 
-    await importLog.update(
-      {
-        status: "completed",
+   await importLog.update(
+{
+  status: "completed",
 
-        importedOrders:
-          imported,
+  importedOrders:
+    imported,
 
-        skippedOrders:
-          skipped,
+  skippedOrders:
+    skipped,
 
-        restaurantsCreated,
+  restaurantsCreated: restaurantNames.size,
 
-        driversCreated,
-      },
-      { transaction }
-    );
+  driversCreated: driverNames.size,
+},
+{ transaction }
+);
 
     await transaction.commit();
 
-    return res.json({
-      success: true,
-      imported,
-      skipped,
-      totalRows:
-        rows.length,
-      restaurantsCreated,
-      driversCreated,
-    });
+  return res.json({
+ success:true,
+ imported,
+ skipped,
+ totalRows: rows.length,
+ restaurantsCreated: restaurantNames.size,
+ driversCreated: driverNames.size,
+});
   } catch(error){
 
  if(transaction){

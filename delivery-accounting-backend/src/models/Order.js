@@ -166,7 +166,15 @@ distance: {
 cancelReason: {
   type: DataTypes.TEXT,
 },
+restaurantsCount: {
+ type: DataTypes.INTEGER,
+ defaultValue: 0
+},
 
+driversCount: {
+ type: DataTypes.INTEGER,
+ defaultValue: 0
+},
 commissionDescription: {
   type: DataTypes.TEXT,
 },

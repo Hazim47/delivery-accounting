@@ -15,7 +15,7 @@ const paymentRoutes = require("./routes/paymentRoutes");
 const closingRoutes = require("./routes/closingRoutes");
 const chartsRoutes = require("./routes/chartsRoutes");
 const importRoutes =require("./routes/importRoutes");
-
+const dailyReportRoutes = require("./routes/dailyReportRoutes");
 const driverPaymentRoutes = require("./routes/driverPaymentRoutes");
 const statementRoutes =
   require("./routes/statementRoutes");
@@ -38,6 +38,10 @@ app.use("/api/driver-settlement", driverSettlementRoutes);
 app.use(
   "/api/statements",
   statementRoutes
+);
+app.use(
+ "/api/daily-reports",
+ dailyReportRoutes
 );
 app.use("/api/accounting", accountingRoutes);
 app.use("/api/dashboard", dashboardRoutes);

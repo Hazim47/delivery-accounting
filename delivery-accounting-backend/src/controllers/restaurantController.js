@@ -25,6 +25,7 @@ const createRestaurant = async (req, res) => {
 };
 
 const getRestaurantDetails = async (req, res) => {
+ 
   try {
     const { id } = req.params;
     const { from, to } = req.query;
@@ -73,17 +74,18 @@ try {
 
     Order.findAll({
   where,
-  attributes: [
-    "id",
-    "orderDate",
-    "customerName",
-    "orderAmount",
-    "driverEarning",
-    "restaurantEarning",
-    "tariff",
-    "AccountingDepartment",
-    "status",
-  ],
+ attributes: [
+  "id",
+  "orderDate",
+  "customerName",
+  "captainName",
+  "orderAmount",
+  "driverEarning",
+  "restaurantEarning",
+  "tariff",
+  "AccountingDepartment",
+  "status",
+],
   order: [["orderDate", "DESC"]],
   limit,
   offset,
@@ -152,7 +154,7 @@ try {
 
 } catch (e) {
 
-  console.log("RESTAURANT DETAILS ERROR:");
+  
   console.log(e);
   throw e;
 

@@ -10,7 +10,9 @@ const Restaurant = sequelize.define("Restaurant", {
   phone: {
     type: DataTypes.STRING,
   },
-
+captainName: {
+ type: DataTypes.STRING
+},
   address: {
     type: DataTypes.STRING,
   },
