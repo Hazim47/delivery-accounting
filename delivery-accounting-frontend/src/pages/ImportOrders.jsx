@@ -66,6 +66,7 @@ return (
     sx={{
       p: 3,
       minHeight: "100vh",
+      
       background:
         "radial-gradient(circle at top left, #0a0a0a 0%, #050505 50%, #000 100%)",
       color: "#fff",

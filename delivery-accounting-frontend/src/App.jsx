@@ -9,7 +9,7 @@ import Restaurants from "./pages/Restaurants";
 import Statements from "./pages/Statements";
 import RestaurantDetails from "./pages/RestaurantDetails";
 import StatementDetails from "./pages/StatementDetails";
-
+import DailyReports from "./pages/DailyReports";
 function App() {
   return (
     <BrowserRouter>
@@ -67,6 +67,7 @@ function App() {
   }
 
         />
+
         <Route
   path="/statements"
   element={
@@ -98,8 +99,18 @@ function App() {
     </ProtectedRoute>
   }
 />
-
+<Route
+  path="/daily-reports"
+  element={
+    <ProtectedRoute roles={["ADMIN"]}>
+      <MainLayout>
+        <DailyReports />
+      </MainLayout>
+    </ProtectedRoute>
+  }
+/>
       </Routes>
+      
     </BrowserRouter>
   );
 }

@@ -34,6 +34,7 @@ function RestaurantDetails() {
   const [orders, setOrders] = useState([]);
 const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
+  const [selectedOrders, setSelectedOrders] = useState([]);
   const [page, setPage] = useState(1);
   const [fromDate, setFromDate] = useState(null);
 const [toDate, setToDate] = useState(null);
@@ -95,6 +96,175 @@ const handleSearch = () => {
     </Box>
   );
 }
+const toggleOrder = (order) => {
+  setSelectedOrders((prev) => {
+    const exists = prev.find((o) => o.id === order.id);
+
+    if (exists) {
+      return prev.filter((o) => o.id !== order.id);
+    }
+
+    return [...prev, order];
+  });
+};
+
+
+
+const handlePrint = () => {
+
+  if(selectedOrders.length === 0){
+    alert("اختر طلبات للطباعة");
+    return;
+  }
+
+
+  const printWindow = window.open("", "_blank");
+
+
+  printWindow.document.write(`
+
+<html dir="rtl">
+
+<head>
+
+<title>Orders Print</title>
+
+
+<style>
+
+body{
+font-family: Arial;
+padding:30px;
+}
+
+
+h2{
+text-align:center;
+}
+
+
+table{
+width:100%;
+border-collapse:collapse;
+margin-top:20px;
+}
+
+
+th{
+background:#eee;
+}
+
+
+td,th{
+
+border:1px solid #333;
+padding:8px;
+text-align:center;
+
+}
+
+
+@media print{
+
+button{
+display:none;
+}
+
+}
+
+</style>
+
+
+</head>
+
+
+<body>
+
+
+<h2>
+${restaurant.name}
+</h2>
+
+
+<table>
+
+
+<thead>
+
+<tr>
+
+<th>التاريخ</th>
+<th>الزبون</th>
+<th>الكابتن</th>
+<th>قيمة الطلب</th>
+<th>التعرفة</th>
+<th>المحاسبة</th>
+<th>الحالة</th>
+
+
+</tr>
+
+</thead>
+
+
+<tbody>
+
+
+${selectedOrders.map(order=>`
+
+<tr>
+
+<td>${order.orderDate}</td>
+
+<td>${order.customerName}</td>
+
+<td>${order.captainName || ""}</td>
+
+<td>${Number(order.orderAmount||0).toFixed(2)} JD</td>
+
+<td>${Number(order.tariff||0).toFixed(2)} JD</td>
+
+<td>${Number(order.AccountingDepartment||0).toFixed(2)} JD</td>
+
+<td>${order.status}</td>
+
+
+</tr>
+
+
+`).join("")}
+
+
+
+</tbody>
+
+
+</table>
+
+
+<script>
+
+window.onload=function(){
+
+window.print();
+
+}
+
+</script>
+
+
+</body>
+
+</html>
+
+
+`);
+
+
+printWindow.document.close();
+
+
+};
 return (
   <Box
     sx={{
@@ -617,7 +787,34 @@ return (
       }}
     >
       
-      <TableContainer>
+<Box
+sx={{
+display:"flex",
+justifyContent:"flex-end",
+p:3,
+pb:1
+}}
+>
+
+<Button
+variant="contained"
+onClick={handlePrint}
+sx={{
+background:"linear-gradient(135deg,#fde047,#f59e0b)",
+color:"#000",
+fontWeight:900,
+borderRadius:"15px",
+px:5
+}}
+>
+🖨️ طباعة ({selectedOrders.length})
+</Button>
+
+</Box>
+
+
+<TableContainer>
+        
         <Table>
 
           <TableHead>
@@ -681,14 +878,15 @@ return (
  {t("AccountingDepartment")}
 </TableCell>
 
-              <TableCell
-                sx={{
-                  color: "#fde047",
-                  fontWeight: 900,
-                }}
-              >
-                {t("status")}
-              </TableCell>
+<TableCell
+  sx={{
+    color: "#fde047",
+    fontWeight: 900,
+    width: 70,
+    textAlign: "center",
+  }}
+>
+</TableCell>
             </TableRow>
           </TableHead>
 
@@ -780,54 +978,40 @@ return (
 >
   {Number(order.AccountingDepartment || 0).toFixed(2)} JD
 </TableCell>
-                <TableCell>
-                  <Chip
-                    label={
-  order.status === "PENDING"
-    ? t("pending")
-    : order.status === "PREPARING"
-    ? t("preparing")
-    : order.status === "ON_THE_WAY"
-    ? t("onTheWay")
-    : order.status === "DELIVERED"
-    ? t("delivered")
-    : order.status === "CANCELLED"
-    ? t("cancelled")
-    : order.status
+       <TableCell>
+
+<Box
+sx={{
+display:"flex",
+justifyContent:"center",
+alignItems:"center",
+}}
+>
+
+<input
+type="checkbox"
+
+checked={
+selectedOrders.some(
+(item)=>item.id === order.id
+)
 }
-                    size="small"
-                    sx={{
-                      minWidth: 110,
-                      fontWeight: 800,
-                      letterSpacing: ".5px",
 
-                      ...(order.status === "DELIVERED" && {
-                        background:
-                          "linear-gradient(135deg,#22c55e,#16a34a)",
-                        color: "#fff",
-                      }),
+onChange={() => toggleOrder(order)}
 
-                      ...(order.status === "PENDING" && {
-                        background:
-                          "linear-gradient(135deg,#facc15,#f59e0b)",
-                        color: "#000",
-                      }),
+style={{
+width:"16px",
+height:"16px",
+cursor:"pointer",
+accentColor:"#facc15",
+transition:"0.2s",
+}}
 
-                      ...(order.status === "CANCELLED" && {
-                        background:
-                          "linear-gradient(135deg,#ef4444,#b91c1c)",
-                        color: "#fff",
-                      }),
+/>
 
-                      ...(order.status !== "DELIVERED" &&
-                        order.status !== "PENDING" &&
-                        order.status !== "CANCELLED" && {
-                          background: "#374151",
-                          color: "#fff",
-                        }),
-                    }}
-                  />
-                </TableCell>
+</Box>
+
+</TableCell>
               </TableRow>
             ))
           )}

@@ -15,6 +15,7 @@ import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import LogoutIcon from "@mui/icons-material/Logout";
 import LanguageIcon from "@mui/icons-material/Language";
 import { useNavigate } from "react-router-dom";
+import TodayIcon from "@mui/icons-material/Today";
 import "./Sidebar.css";
 
 function Sidebar() {
@@ -80,6 +81,12 @@ function Sidebar() {
       path: "/statements",
       roles: ["ADMIN", "ACCOUNTANT_1", "ACCOUNTANT_2", "EMPLOYEE"],
     },
+ {
+  title: t("dailyReports"),
+   icon: <TodayIcon />,
+  path:"/daily-reports",
+  roles: ["ADMIN"],
+},
     {
       title: t("users"),
       icon: <GroupIcon />,

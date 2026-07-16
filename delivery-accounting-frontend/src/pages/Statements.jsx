@@ -124,7 +124,7 @@ return (
         WebkitTextFillColor: "transparent",
       }}
     >
-      {t("statementsTitle")}
+      {t("statements")}
     </Typography>
 <Paper
   sx={{

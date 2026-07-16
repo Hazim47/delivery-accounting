@@ -156,7 +156,7 @@ noDataFound: "No Data Found",
 noPayments: "No Payments",
 restaurantDashboard: "Restaurant Dashboard",
 restaurantDetailsSubtitle: "Track restaurant orders and statistics",
-
+dailyReports: "Daily Reports",
 searchByDate: "Search by Date",
 fromDate: "From Date",
 toDate: "To Date",
@@ -456,7 +456,7 @@ restaurantDetailsSubtitle:
   "متابعة الطلبات والإحصائيات الخاصة بالمطعم",
 
 searchByDate: "البحث حسب التاريخ",
-
+dailyReports: "التقارير اليومية",
 fromDate: "من تاريخ",
 
 toDate: "إلى تاريخ",
