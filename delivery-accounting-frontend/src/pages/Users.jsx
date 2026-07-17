@@ -554,7 +554,7 @@ return (
         value: password,
          
         set: setPassword,
-        type: "password",
+         type: "text",
       },
     ].map((f) => (
       <TextField
@@ -755,7 +755,7 @@ return (
   >
     <TextField
       fullWidth
-      type="password"
+      type="text"
       label={t("newPassword")}
       margin="normal"
       value={newPassword}
