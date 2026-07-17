@@ -100,6 +100,8 @@ const toNumber = (val) => {
     let skipped = 0;
     let restaurantsCreated = 0;
     let driversCreated = 0;
+    let totalTariff = 0;
+    let totalAccounting = 0;
 
 const [
   existingRestaurants,
@@ -402,7 +404,16 @@ if (driverName) {
           driversCreated++;
         }
       }
+totalTariff += toNumber(
+  row["التعرفه"]
+);
 
+totalAccounting += toNumber(
+  row["قسم المحاسبة"] ??
+  row["قسم المحاسبه"] ??
+  row["تعويض المحاسبه"] ??
+  row["تعويض المحاسبة"]
+);
       const deliveryFee =
         Number(
           row["سعر التوصيل"]
@@ -626,13 +637,24 @@ for(let i = 0; i < restaurantUpdates.length; i += 500){
 
     await transaction.commit();
 
-  return res.json({
- success:true,
- imported,
- skipped,
- totalRows: rows.length,
- restaurantsCreated: restaurantNames.size,
- driversCreated: driverNames.size,
+return res.json({
+  success:true,
+
+  message:"تم تحميل الملف بنجاح",
+
+  imported,
+
+  skipped,
+
+  totalRows: rows.length,
+
+  restaurantsCreated: restaurantNames.size,
+
+  driversCreated: driverNames.size,
+
+  totalTariff: Number(totalTariff.toFixed(2)),
+
+  totalAccounting: Number(totalAccounting.toFixed(2)),
 });
   } catch(error){
 

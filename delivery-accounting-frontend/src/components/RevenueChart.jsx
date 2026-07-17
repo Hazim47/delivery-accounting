@@ -42,13 +42,13 @@ function RevenueChart() {
 
         <Legend />
 
-        <Line
-          type="monotone"
-          dataKey="sales"
-          name={t("totalSales")}
-          stroke="#2563eb"
-          strokeWidth={3}
-        />
+       <Line
+  type="monotone"
+  dataKey="accounting"
+  name={t("AccountingDepartment")}
+  stroke="#2563eb"
+  strokeWidth={3}
+/>
 
         <Line
           type="monotone"

@@ -253,20 +253,28 @@ sx={{
 
 <br/>
 
-{t("imported")}: {result.imported}
+{t("imported")} : {result.imported}
 
 <br/>
 
-{t("skipped")}: {result.skipped}
+{t("skipped")} : {result.skipped}
 
 <br/>
 
-{t("restaurants")}: {result.restaurantsCreated}
+{t("restaurants")} : {result.restaurantsCreated}
 
 <br/>
 
-{t("drivers")}: {result.driversCreated}
+{t("drivers")} : {result.driversCreated}
+<br/>
 
+{t("tariff")} :
+{Number(result.totalTariff || 0).toFixed(2)} JD
+
+<br/>
+
+{t("AccountingDepartment")} :
+{Number(result.totalAccounting || 0).toFixed(2)} JD
 </Alert>
 )}
     </Paper>

@@ -3,9 +3,19 @@ const { Op, fn, col, Sequelize } = require("sequelize");
 const Order = require("../models/Order");
 const Restaurant = require("../models/Restaurant");
 const Driver = require("../models/Driver");
-const Expense = require("../models/Expense");
-const DriverPayment = require("../models/DriverPayment");
 
+/* =========================
+   📅 CURRENT MONTH FILTER
+========================= */
+const getCurrentMonthFilter = () => {
+  const startOfMonth = new Date();
+  startOfMonth.setDate(1);
+  startOfMonth.setHours(0, 0, 0, 0);
+
+  return {
+    [Op.gte]: startOfMonth,
+  };
+};
 /* =========================
    📊 DAILY STATS
 ========================= */
@@ -49,13 +59,11 @@ const getDailyStats = async (req, res) => {
 ========================= */
 const getMonthlyStats = async (req, res) => {
   try {
-    const startOfMonth = new Date();
-    startOfMonth.setDate(1);
-    startOfMonth.setHours(0, 0, 0, 0);
+    const monthFilter = getCurrentMonthFilter();
 
     const stats = await Order.findOne({
       where: {
-        orderDate: { [Op.gte]: startOfMonth },
+        orderDate: monthFilter,
         status: "DELIVERED",
       },
       attributes: [
@@ -115,6 +123,7 @@ const getGeneralStats = async (req, res) => {
    📊 OVERVIEW DASHBOARD
 ========================= */
 const getOverviewStats = async (req, res) => {
+  const monthFilter = getCurrentMonthFilter();
   try {
     const [
       totalRestaurants,
@@ -130,71 +139,46 @@ const getOverviewStats = async (req, res) => {
       Order.findOne({
         where: {
           status: "DELIVERED",
+          orderDate: monthFilter,
         },
-        attributes: [
-          [
-            Sequelize.fn("COUNT", Sequelize.col("id")),
-            "totalOrders",
-          ],
-          [
-            Sequelize.fn("COALESCE",
-              Sequelize.fn("SUM", Sequelize.col("orderAmount")),
-              0
-            ),
-            "totalRevenue",
-          ],
-          [
-            Sequelize.fn("COALESCE",
-              Sequelize.fn("SUM", Sequelize.col("tariff")),
-              0
-            ),
-            "totalTariff",
-          ],
-          [
-            Sequelize.fn("COALESCE",
-              Sequelize.fn("SUM", Sequelize.col("companyCommission")),
-              0
-            ),
-            "totalProfit",
-          ],
-          [
-            Sequelize.fn("COALESCE",
-              Sequelize.fn("SUM", Sequelize.col("AccountingDepartment")),
-              0
-            ),
-            "totalAccountingDepartment",
-          ],
-        ],
+      attributes: [
+  [
+    Sequelize.fn("COUNT", Sequelize.col("id")),
+    "totalOrders",
+  ],
+  [
+    Sequelize.fn(
+      "COALESCE",
+      Sequelize.fn("SUM", Sequelize.col("tariff")),
+      0
+    ),
+    "totalTariff",
+  ],
+  [
+    Sequelize.fn(
+      "COALESCE",
+      Sequelize.fn("SUM", Sequelize.col("AccountingDepartment")),
+      0
+    ),
+    "totalAccountingDepartment",
+  ],
+],
         raw: true,
       }),
-
-      Expense.sum("amount"),
-
-      DriverPayment.sum("amount"),
     ]);
 
     const totalRevenue = Number(orderStats.totalRevenue);
     const totalProfit = Number(orderStats.totalProfit);
-    const totalExpensesValue = Number(totalExpenses || 0);
-    const totalDriverPaymentsValue = Number(totalDriverPayments || 0);
 
-    res.json({
-      totalRestaurants,
-      totalDrivers,
-      totalOrders: Number(orderStats.totalOrders),
-      totalRevenue,
-      totalTariff: Number(orderStats.totalTariff),
-      totalProfit,
-      totalAccountingDepartment: Number(
-        orderStats.totalAccountingDepartment
-      ),
-      totalExpenses: totalExpensesValue,
-      totalDriverPayments: totalDriverPaymentsValue,
-      netProfit:
-        totalProfit -
-        totalExpensesValue -
-        totalDriverPaymentsValue,
-    });
+   res.json({
+  totalRestaurants,
+  totalDrivers,
+  totalOrders: Number(orderStats.totalOrders),
+  totalTariff: Number(orderStats.totalTariff),
+  totalAccountingDepartment: Number(
+    orderStats.totalAccountingDepartment
+  ),
+});
   } catch (error) {
     console.error(error);
     res.status(500).json({
@@ -207,46 +191,81 @@ const getOverviewStats = async (req, res) => {
    📊 REVENUE CHART
 ========================= */
 const getRevenueChart = async (req, res) => {
+  const monthFilter = getCurrentMonthFilter();
+
   try {
     const data = await Order.findAll({
-      where: { status: "DELIVERED" },
+      where: {
+        status: "DELIVERED",
+        orderDate: monthFilter,
+      },
+
       attributes: [
         [
           Sequelize.fn(
             "TO_CHAR",
             Sequelize.col("orderDate"),
-            "Mon"
+            "DD"
           ),
-          "month",
+          "date",
         ],
+
         [
-          Sequelize.fn("SUM", Sequelize.col("orderAmount")),
-          "revenue",
+          Sequelize.fn(
+            "COALESCE",
+            Sequelize.fn(
+              "SUM",
+              Sequelize.col("AccountingDepartment")
+            ),
+            0
+          ),
+          "accounting",
         ],
+
         [
-          Sequelize.fn("SUM", Sequelize.col("companyCommission")),
-          "profit",
+          Sequelize.fn(
+            "COALESCE",
+            Sequelize.fn(
+              "SUM",
+              Sequelize.col("tariff")
+            ),
+            0
+          ),
+          "tariff",
         ],
       ],
+
       group: [
-        Sequelize.fn("TO_CHAR", Sequelize.col("orderDate"), "Mon"),
+        Sequelize.fn(
+          "TO_CHAR",
+          Sequelize.col("orderDate"),
+          "DD"
+        ),
       ],
+
       order: [
         [
-          Sequelize.fn("MIN", Sequelize.col("orderDate")),
+          Sequelize.fn(
+            "MIN",
+            Sequelize.col("orderDate")
+          ),
           "ASC",
         ],
       ],
+
       raw: true,
     });
 
     res.json(data);
+
   } catch (error) {
     console.log(error);
-    res.status(500).json({ message: "Server Error" });
+
+    res.status(500).json({
+      message: "Server Error",
+    });
   }
 };
-
 /* =========================
    EXPORT
 ========================= */

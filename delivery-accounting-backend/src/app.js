@@ -21,7 +21,10 @@ const statementRoutes =
   require("./routes/statementRoutes");
 const app = express();
 app.use(
-  cors({ })
+  cors({
+    origin: true,
+    credentials: true
+   })
 );
 app.use(express.json());
 app.use(
