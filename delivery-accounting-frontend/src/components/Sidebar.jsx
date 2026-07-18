@@ -20,14 +20,14 @@ import "./Sidebar.css";
 
 function Sidebar() {
   const { t } = useTranslation();
-  const location = useLocation(); // ✅ لازم تضيفها
+  const location = useLocation(); 
 
   const user = JSON.parse(localStorage.getItem("user"));
   const role = user?.role;
   const navigate = useNavigate();
   const [lang, setLang] = useState(i18n.language);
 
-  /* sync language state */
+
   useEffect(() => {
     const handler = (lng) => setLang(lng);
 
@@ -35,7 +35,6 @@ function Sidebar() {
     return () => i18n.off("languageChanged", handler);
   }, []);
 
-  /* toggle language */
   const toggleLang = () => {
     const newLang = i18n.language === "en" ? "ar" : "en";
 
@@ -43,14 +42,13 @@ function Sidebar() {
     localStorage.setItem("lang", newLang);
   };
 
-  /* logout */
   const logout = () => {
     localStorage.removeItem("token");
     localStorage.removeItem("user");
     window.location.href = "/login";
   };
 
-  /* ✅ اخفاء السيبدار في صفحة التفاصيل */
+ 
   const hideSidebar = location.pathname.startsWith("/statements/");
 
   if (hideSidebar) return null;

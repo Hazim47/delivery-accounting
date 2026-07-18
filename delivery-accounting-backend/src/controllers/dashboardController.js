@@ -5,15 +5,32 @@ const Restaurant = require("../models/Restaurant");
 const Driver = require("../models/Driver");
 
 /* =========================
-   📅 CURRENT MONTH FILTER
+   📅 CURRENT WEEK FILTER
+   Sunday -> Saturday
 ========================= */
-const getCurrentMonthFilter = () => {
-  const startOfMonth = new Date();
-  startOfMonth.setDate(1);
-  startOfMonth.setHours(0, 0, 0, 0);
+const getCurrentWeekFilter = () => {
+
+  const now = new Date();
+
+  // بداية الأسبوع الأحد
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(
+    now.getDate() - now.getDay()
+  );
+  startOfWeek.setHours(0,0,0,0);
+
+
+  // نهاية الأسبوع السبت
+  const endOfWeek = new Date(startOfWeek);
+  endOfWeek.setDate(
+    startOfWeek.getDate() + 7
+  );
+  endOfWeek.setHours(0,0,0,0);
+
 
   return {
-    [Op.gte]: startOfMonth,
+    [Op.gte]: startOfWeek,
+    [Op.lt]: endOfWeek
   };
 };
 /* =========================
@@ -59,11 +76,13 @@ const getDailyStats = async (req, res) => {
 ========================= */
 const getMonthlyStats = async (req, res) => {
   try {
-    const monthFilter = getCurrentMonthFilter();
+    const startOfMonth = new Date();
+    startOfMonth.setDate(1);
+    startOfMonth.setHours(0, 0, 0, 0);
 
     const stats = await Order.findOne({
       where: {
-        orderDate: monthFilter,
+        orderDate: { [Op.gte]: startOfMonth },
         status: "DELIVERED",
       },
       attributes: [
@@ -100,10 +119,17 @@ const getGeneralStats = async (req, res) => {
       await Promise.all([
         Restaurant.count(),
         Driver.count(),
-        Order.count(),
+        Order.count({
+  where: {
+   createdAt: getCurrentWeekFilter()
+  }
+}),
         Order.sum("companyCommission", {
-          where: { status: "DELIVERED" },
-        }),
+  where: {
+    status: "DELIVERED",
+   createdAt: getCurrentWeekFilter()
+  },
+}),
       ]);
 
     res.json({
@@ -123,144 +149,86 @@ const getGeneralStats = async (req, res) => {
    📊 OVERVIEW DASHBOARD
 ========================= */
 const getOverviewStats = async (req, res) => {
-  const monthFilter = getCurrentMonthFilter();
   try {
     const [
       totalRestaurants,
       totalDrivers,
       orderStats,
-      totalExpenses,
-      totalDriverPayments,
     ] = await Promise.all([
       Restaurant.count(),
 
       Driver.count(),
 
-      Order.findOne({
-        where: {
-          status: "DELIVERED",
-          orderDate: monthFilter,
-        },
-      attributes: [
-  [
-    Sequelize.fn("COUNT", Sequelize.col("id")),
-    "totalOrders",
+     Order.findOne({
+  where: {
+    status: "DELIVERED",
+   createdAt: getCurrentWeekFilter()
+  },
+  attributes: [
+    [
+      Sequelize.fn("COUNT", Sequelize.col("id")),
+      "totalOrders",
+    ],
+
+    [
+      Sequelize.fn(
+        "COALESCE",
+        Sequelize.fn("SUM", Sequelize.col("orderAmount")),
+        0
+      ),
+      "totalRevenue",
+    ],
+
+    [
+      Sequelize.fn(
+        "COALESCE",
+        Sequelize.fn("SUM", Sequelize.col("tariff")),
+        0
+      ),
+      "totalTariff",
+    ],
+
+    [
+      Sequelize.fn(
+        "COALESCE",
+        Sequelize.fn("SUM", Sequelize.col("companyCommission")),
+        0
+      ),
+      "totalProfit",
+    ],
+
+    [
+      Sequelize.fn(
+        "COALESCE",
+        Sequelize.fn("SUM", Sequelize.col("AccountingDepartment")),
+        0
+      ),
+      "totalAccountingDepartment",
+    ],
   ],
-  [
-    Sequelize.fn(
-      "COALESCE",
-      Sequelize.fn("SUM", Sequelize.col("tariff")),
-      0
-    ),
-    "totalTariff",
-  ],
-  [
-    Sequelize.fn(
-      "COALESCE",
-      Sequelize.fn("SUM", Sequelize.col("AccountingDepartment")),
-      0
-    ),
-    "totalAccountingDepartment",
-  ],
-],
-        raw: true,
-      }),
+  raw:true,
+})
     ]);
 
     const totalRevenue = Number(orderStats.totalRevenue);
     const totalProfit = Number(orderStats.totalProfit);
 
-   res.json({
-  totalRestaurants,
-  totalDrivers,
-  totalOrders: Number(orderStats.totalOrders),
-  totalTariff: Number(orderStats.totalTariff),
-  totalAccountingDepartment: Number(
-    orderStats.totalAccountingDepartment
-  ),
-});
+
+    res.json({
+      totalRestaurants,
+      totalDrivers,
+      totalOrders: Number(orderStats.totalOrders),
+      totalRevenue,
+      totalTariff: Number(orderStats.totalTariff),
+      totalProfit,
+      totalAccountingDepartment: Number(
+        orderStats.totalAccountingDepartment
+      ),
+      netProfit:
+        totalProfit,
+    });
   } catch (error) {
     console.error(error);
-    res.status(500).json({
-      message: "Server Error",
-    });
-  }
-};
-
-/* =========================
-   📊 REVENUE CHART
-========================= */
-const getRevenueChart = async (req, res) => {
-  const monthFilter = getCurrentMonthFilter();
-
-  try {
-    const data = await Order.findAll({
-      where: {
-        status: "DELIVERED",
-        orderDate: monthFilter,
-      },
-
-      attributes: [
-        [
-          Sequelize.fn(
-            "TO_CHAR",
-            Sequelize.col("orderDate"),
-            "DD"
-          ),
-          "date",
-        ],
-
-        [
-          Sequelize.fn(
-            "COALESCE",
-            Sequelize.fn(
-              "SUM",
-              Sequelize.col("AccountingDepartment")
-            ),
-            0
-          ),
-          "accounting",
-        ],
-
-        [
-          Sequelize.fn(
-            "COALESCE",
-            Sequelize.fn(
-              "SUM",
-              Sequelize.col("tariff")
-            ),
-            0
-          ),
-          "tariff",
-        ],
-      ],
-
-      group: [
-        Sequelize.fn(
-          "TO_CHAR",
-          Sequelize.col("orderDate"),
-          "DD"
-        ),
-      ],
-
-      order: [
-        [
-          Sequelize.fn(
-            "MIN",
-            Sequelize.col("orderDate")
-          ),
-          "ASC",
-        ],
-      ],
-
-      raw: true,
-    });
-
-    res.json(data);
-
-  } catch (error) {
-    console.log(error);
-
     res.status(500).json({
       message: "Server Error",
     });
@@ -274,5 +242,4 @@ module.exports = {
   getMonthlyStats,
   getGeneralStats,
   getOverviewStats,
-  getRevenueChart,
 };

@@ -1,60 +1,95 @@
 const Order = require("../models/Order");
-const { fn, col } = require("sequelize");
+const { Op, fn, col, Sequelize } = require("sequelize");
 
-// Accounting Department & Tariff Chart
+const getCurrentWeekFilter = () => {
+  const now = new Date();
+
+  const day = now.getDay(); // Sunday = 0
+
+  const startOfWeek = new Date(now);
+  startOfWeek.setDate(now.getDate() - day);
+  startOfWeek.setHours(0,0,0,0);
+
+  return {
+    [Op.gte]: startOfWeek,
+  };
+};
 const getRevenueChart = async (req, res) => {
   try {
     const data = await Order.findAll({
+where:{
+ status:"DELIVERED",
+createdAt:getCurrentWeekFilter()
+},
+
       attributes: [
         [
-          fn("DATE", col("createdAt")),
+          Sequelize.fn(
+            "TO_CHAR",
+            Sequelize.col("orderDate"),
+            "Mon"
+          ),
           "date",
         ],
 
         [
-          fn("SUM", col("AccountingDepartment")),
+          Sequelize.fn(
+            "COALESCE",
+            Sequelize.fn(
+              "SUM",
+              Sequelize.col("AccountingDepartment")
+            ),
+            0
+          ),
           "accounting",
         ],
 
         [
-          fn("SUM", col("tariff")),
+          Sequelize.fn(
+            "COALESCE",
+            Sequelize.fn(
+              "SUM",
+              Sequelize.col("tariff")
+            ),
+            0
+          ),
           "tariff",
         ],
       ],
 
-      where: {
-        status: "DELIVERED",
-      },
-
       group: [
-        fn("DATE", col("createdAt")),
+        Sequelize.fn(
+          "TO_CHAR",
+          Sequelize.col("orderDate"),
+          "Mon"
+        ),
       ],
 
       order: [
-        [fn("DATE", col("createdAt")), "ASC"],
+        [
+          Sequelize.fn(
+            "MIN",
+            Sequelize.col("orderDate")
+          ),
+          "ASC",
+        ],
       ],
 
       raw: true,
     });
 
 
-    const clean = data.map((item) => ({
-      date: item.date,
-      accounting: Number(item.accounting) || 0,
-      tariff: Number(item.tariff) || 0,
-    }));
+  
 
+    res.json(data);
 
-    res.json(clean);
-
-  } catch (error) {
-    console.error(error);
+  } catch(error) {
+    console.log(error);
 
     res.status(500).json({
-      message: "Server Error",
+      message:"Server Error"
     });
   }
 };
-
 
 module.exports = { getRevenueChart };
