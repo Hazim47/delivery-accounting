@@ -33,6 +33,7 @@ const [search,setSearch]=useState("");
 const [summary,setSummary]=useState(null);
 const [page,setPage]=useState(1);
 const [searchInput,setSearchInput]=useState("");
+const isArabic = i18n.language === "ar";
 const fetchReports=async()=>{
 
 try{
