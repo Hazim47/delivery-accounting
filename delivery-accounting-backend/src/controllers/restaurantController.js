@@ -210,43 +210,71 @@ const getRestaurantById = async (req, res) => {
   }
 };
 // جلب كل المطاعم
-const getRestaurants = async (req, res) => {
-  try {
+const getRestaurants = async (req,res)=>{
+ try {
 
-   const restaurants = await Restaurant.findAll({
-  attributes: [
-    "id",
-    "name",
-    "phone",
-    "address",
-    "active",
-    "commissionRate",
-    "lastOrderDate",
-  ],
-  order: [
-    ["lastOrderDate", "DESC"],
-    ["name", "ASC"],
-  ],
-  raw: true,
-});
+  const limit = 50;
+  const page = Number(req.query.page) || 1;
+  const offset = (page-1)*limit;
+
+  const search = req.query.search || "";
 
 
-    res.json({
-      restaurants,
-    });
+  const where = {};
 
-
-  } catch (error) {
-
-    console.log(error);
-
-    res.status(500).json({
-      message:"Server Error"
-    });
-
+  if(search){
+    where.name = {
+      [Op.iLike]: `%${search}%`
+    };
   }
-};
 
+
+  const {count, rows} = await Restaurant.findAndCountAll({
+
+    where,
+
+    attributes:[
+      "id",
+      "name",
+      "phone",
+      "address",
+      "active",
+      "commissionRate",
+      "lastOrderDate",
+    ],
+
+    order:[
+      ["lastOrderDate","DESC"]
+    ],
+
+    limit,
+    offset,
+    raw:true
+  });
+
+
+  res.json({
+
+    restaurants: rows,
+
+    pages: Math.ceil(count / limit),
+
+    total: count
+
+  });
+
+
+ }catch(error){
+
+ console.log(error);
+
+ res.status(500).json({
+  message:"Server Error"
+ });
+
+ }
+
+};
 // تعديل مطعم
 const updateRestaurant = async (req, res) => {
   try {

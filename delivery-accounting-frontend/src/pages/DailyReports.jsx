@@ -32,7 +32,7 @@ const [loading,setLoading]=useState(true);
 const [search,setSearch]=useState("");
 const [summary,setSummary]=useState(null);
 const [page,setPage]=useState(1);
-const isArabic = i18n.language === "ar";
+const [searchInput,setSearchInput]=useState("");
 const fetchReports=async()=>{
 
 try{
@@ -65,7 +65,19 @@ setLoading(false);
 useEffect(()=>{
 fetchReports();
 },[]);
+useEffect(()=>{
 
+ const timer=setTimeout(()=>{
+
+   setSearch(searchInput);
+   setPage(1);
+
+ },300);
+
+
+ return ()=>clearTimeout(timer);
+
+},[searchInput]);
 
 const filteredReports = reports.filter((report) => {
   if (!report.importDate) return false;
@@ -178,8 +190,11 @@ backdropFilter:"blur(20px)"
 <TextField
 fullWidth
 placeholder={t("searchByDate")}
-value={search}
-onChange={(e)=>setSearch(e.target.value)}
+value={searchInput}
+onChange={(e)=>{
+ setSearchInput(e.target.value);
+ setPage(1);
+}}
 InputProps={{
 startAdornment:(
 <InputAdornment position="start">
@@ -282,14 +297,14 @@ background:"rgba(250,204,21,.05)"
 
 fontWeight:900
 }}>
-{report.totalTariff || 0} JD
+{Number(report.totalTariff || 0).toFixed(2)} JD
 </TableCell>
 
 <TableCell sx={{
 
 fontWeight:900
 }}>
-{report.totalAccounting || 0} JD
+{Number(report.totalAccounting || 0).toFixed(2)} JD
 </TableCell>
 
 </TableRow>

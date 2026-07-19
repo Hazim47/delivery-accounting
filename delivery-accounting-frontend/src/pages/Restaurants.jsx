@@ -2,7 +2,6 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/axios";
 import { useTranslation } from "react-i18next";
-
 import {
   Box,
   Button,
@@ -16,6 +15,7 @@ import {
   Paper,
   TextField,
   Chip,
+  Pagination
 } from "@mui/material";
 
 
@@ -28,10 +28,10 @@ function Restaurants() {
   const { t, i18n } = useTranslation();
 
   const [restaurants, setRestaurants] = useState([]);
-  
-
+  const [page,setPage] = useState(1);
+const [totalPages,setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
-
+const [searchInput,setSearchInput]=useState("");
 
   /* Search only */
   const [search, setSearch] = useState("");
@@ -40,34 +40,57 @@ function Restaurants() {
       LOAD RESTAURANTS
   ============================ */
 
-  const fetchRestaurants = async () => {
-    try {
-      const res = await API.get("/restaurants");
-      const data = res.data.restaurants || [];
-      setRestaurants(data);
-      
+const fetchRestaurants = async () => {
 
-    } catch (err) {
-      console.log(err);
-    } finally {
-      setLoading(false);
-    }
-  };
+ try {
 
-  useEffect(() => {
-    fetchRestaurants();
-  }, []);
+ setLoading(true);
 
+ const res = await API.get(
+ `/restaurants?page=${page}&search=${search}`
+ );
+
+ setRestaurants(res.data.restaurants || []);
+ setTotalPages(res.data.pages || 1);
+
+
+ } catch(err){
+
+ console.log(err);
+
+ } finally {
+
+ setLoading(false);
+
+ }
+
+};
+
+useEffect(()=>{
+ fetchRestaurants();
+},[page, search]);
+
+
+useEffect(()=>{
+
+ const timer=setTimeout(()=>{
+
+   if(search !== searchInput){
+     setSearch(searchInput);
+     setPage(1);
+   }
+
+ },500);
+
+
+ return ()=>clearTimeout(timer);
+
+},[searchInput]);
   /* ============================
       SEARCH ONLY (NAME)
   ============================ */
 
-const filteredRestaurants =
-restaurants.filter((r)=>
- r.name
- .toLowerCase()
- .includes(search.toLowerCase())
-);
+const filteredRestaurants = restaurants;
     if (loading)
     return <h2>{t("loading")}</h2>;
 
@@ -93,6 +116,7 @@ restaurants.filter((r)=>
         boxShadow: "0 25px 60px rgba(0,0,0,.65)",
       }}
     >
+      
       <Box
         display="flex"
         justifyContent="space-between"
@@ -143,10 +167,12 @@ restaurants.filter((r)=>
       <TextField
         fullWidth
         label={t("namerestaurants")}
-        value={search}
-        onChange={(e) =>
-          setSearch(e.target.value)
-        }
+ value={searchInput}
+
+onChange={(e)=>{
+ setSearchInput(e.target.value);
+}}
+
         InputProps={{
           startAdornment: (
             <SearchIcon
@@ -281,7 +307,7 @@ restaurants.filter((r)=>
                   "0 8px 18px rgba(250,204,21,.25)",
               }}
             >
-              {index + 1}
+              {(page - 1) * 50 + index + 1}
             </Box>
 
           </TableCell>
@@ -418,6 +444,33 @@ restaurants.filter((r)=>
 
   </Table>
 </TableContainer>
+<Box
+ sx={{
+   mt:4,
+   display:"flex",
+   justifyContent:"center"
+ }}
+>
+ <Pagination
+   count={totalPages}
+   page={page}
+   onChange={(e,value)=>{
+     setPage(value);
+   }}
+   color="primary"
+   size="large"
+   sx={{
+     "& .MuiPaginationItem-root":{
+       color:"#fff",
+       borderColor:"rgba(250,204,21,.3)"
+     },
+     "& .Mui-selected":{
+       background:"#facc15 !important",
+       color:"#000"
+     }
+   }}
+ />
+</Box>
   </Box>
 );
 }
