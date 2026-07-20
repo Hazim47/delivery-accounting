@@ -20,7 +20,15 @@ archiveYear: {
 archiveMonth: {
   type: DataTypes.INTEGER,
 },
+totalTariff: {
+ type: DataTypes.FLOAT,
+ defaultValue: 0
+},
 
+totalAccounting: {
+ type: DataTypes.FLOAT,
+ defaultValue: 0
+},
 isArchived: {
   type: DataTypes.BOOLEAN,
   defaultValue: false,

@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useEffect, useState, useCallback,useMemo  } from "react";
+import { useParams } from "react-router-dom";
 import API from "../api/axios";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFnsV2";
@@ -12,7 +12,6 @@ import {
   Typography,
   Paper,
   Grid,
-  TextField,
   Button,
   CircularProgress,
   Table,
@@ -21,7 +20,11 @@ import {
   TableContainer,
   TableHead,
   TableRow,
-  Chip,
+  Dialog,
+ DialogTitle,
+ DialogContent,
+ DialogActions,
+  Checkbox,
 } from "@mui/material";
 
 import SearchIcon from "@mui/icons-material/Search";
@@ -32,13 +35,32 @@ function RestaurantDetails() {
   const [restaurant, setRestaurant] = useState(null);
   const [stats, setStats] = useState(null);
   const [orders, setOrders] = useState([]);
-const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
-  const [selectedOrders, setSelectedOrders] = useState([]);
+  const [selectedOrders,setSelectedOrders]=useState(new Set());
   const [page, setPage] = useState(1);
   const [fromDate, setFromDate] = useState(null);
 const [toDate, setToDate] = useState(null);
-
+const [printDialog,setPrintDialog] = useState(false);
+const [printAll,setPrintAll] = useState(false);
+const [totalPages,setTotalPages]=useState(1);
+const [selectedColumns, setSelectedColumns] = useState([
+  "orderDate",
+  "customerName",
+  "captainName",
+  "customerAddress",
+  "branchName",
+  "tariff",
+  "AccountingDepartment",
+]);
+const columns = useMemo(()=>[
+  {key:"orderDate", label:t("date")},
+  {key:"customerName", label:t("customer")},
+  {key:"captainName", label:t("captain")},
+  {key:"customerAddress", label:t("customerAddress")},
+  {key:"branchName", label:t("branchName")},
+  {key:"tariff", label:t("tariff")},
+  {key:"AccountingDepartment", label:t("AccountingDepartment")},
+],[t]);
 const fetchRestaurant = useCallback(async () => {
   try {
     const params = new URLSearchParams();
@@ -60,6 +82,7 @@ const url = `/restaurants/${id}/details?${params.toString()}`;
     setRestaurant(res.data.restaurant);
     setStats(res.data.stats);
     setOrders(res.data.orders);
+    setTotalPages(res.data.totalPages || 1);
   } catch (err) {
     console.error(err);
   } finally {
@@ -96,29 +119,92 @@ const handleSearch = () => {
     </Box>
   );
 }
-const toggleOrder = (order) => {
-  setSelectedOrders((prev) => {
-    const exists = prev.find((o) => o.id === order.id);
+const toggleOrder = (order)=>{
 
-    if (exists) {
-      return prev.filter((o) => o.id !== order.id);
-    }
+setSelectedOrders(prev=>{
 
-    return [...prev, order];
-  });
+const next = new Set(prev);
+
+if(next.has(order.id)){
+next.delete(order.id);
+}else{
+next.add(order.id);
+}
+
+return next;
+
+});
+
 };
 
+const toggleAllOrders = ()=>{
+
+setSelectedOrders(prev=>{
+
+const next = new Set(prev);
+
+const allSelected = orders.every(
+(order)=>next.has(order.id)
+);
 
 
-const handlePrint = () => {
+orders.forEach(order=>{
 
-  if(selectedOrders.length === 0){
-    alert("اختر طلبات للطباعة");
+if(allSelected){
+next.delete(order.id);
+}
+else{
+next.add(order.id);
+}
+
+});
+
+
+return next;
+
+});
+
+};
+
+const toggleColumn = (key)=>{
+
+setSelectedColumns(prev=>{
+
+if(prev.includes(key)){
+return prev.filter(c=>c!==key);
+}
+
+return [...prev,key];
+
+});
+
+};
+const handlePrint = (printAll = false) => {
+
+  const ordersToPrint = printAll 
+? orders 
+: orders.filter(order=>selectedOrders.has(order.id));
+
+
+  if(ordersToPrint.length === 0){
+    alert(t("noOrdersToPrint"));
     return;
   }
 
 
   const printWindow = window.open("", "_blank");
+
+
+const columnLabels = {
+    orderDate:t("date"),
+    customerName:t("customer"),
+    captainName:t("captain"),
+    customerAddress:t("customerAddress"),
+    branchName:t("branchName"),
+    tariff:t("tariff"),
+    AccountingDepartment:t("AccountingDepartment"),
+   
+};
 
 
   printWindow.document.write(`
@@ -128,7 +214,6 @@ const handlePrint = () => {
 <head>
 
 <title>Orders Print</title>
-
 
 <style>
 
@@ -156,24 +241,13 @@ background:#eee;
 
 
 td,th{
-
 border:1px solid #333;
 padding:8px;
 text-align:center;
-
 }
 
-
-@media print{
-
-button{
-display:none;
-}
-
-}
 
 </style>
-
 
 </head>
 
@@ -188,19 +262,17 @@ ${restaurant.name}
 
 <table>
 
-
 <thead>
 
 <tr>
 
-<th>التاريخ</th>
-<th>الزبون</th>
-<th>الكابتن</th>
-<th>قيمة الطلب</th>
-<th>التعرفة</th>
-<th>المحاسبة</th>
-<th>الحالة</th>
-
+${
+selectedColumns
+.map(col=>`
+<th>${columnLabels[col]}</th>
+`)
+.join("")
+}
 
 </tr>
 
@@ -210,23 +282,28 @@ ${restaurant.name}
 <tbody>
 
 
-${selectedOrders.map(order=>`
+${ordersToPrint.map(order=>`
 
 <tr>
 
-<td>${order.orderDate}</td>
+${
+selectedColumns.map(col=>{
 
-<td>${order.customerName}</td>
+let value = order[col] ?? "";
 
-<td>${order.captainName || ""}</td>
 
-<td>${Number(order.orderAmount||0).toFixed(2)} JD</td>
+if(col === "tariff" || col === "AccountingDepartment"){
+ value = Number(value || 0).toFixed(2) + " JD";
+}
 
-<td>${Number(order.tariff||0).toFixed(2)} JD</td>
 
-<td>${Number(order.AccountingDepartment||0).toFixed(2)} JD</td>
+return `<td>${String(value)
+.replace(/</g,"&lt;")
+.replace(/>/g,"&gt;")
+}</td>`;
 
-<td>${order.status}</td>
+}).join("")
+}
 
 
 </tr>
@@ -235,9 +312,7 @@ ${selectedOrders.map(order=>`
 `).join("")}
 
 
-
 </tbody>
-
 
 </table>
 
@@ -245,9 +320,7 @@ ${selectedOrders.map(order=>`
 <script>
 
 window.onload=function(){
-
 window.print();
-
 }
 
 </script>
@@ -257,12 +330,10 @@ window.print();
 
 </html>
 
-
 `);
 
 
 printWindow.document.close();
-
 
 };
 return (
@@ -796,19 +867,33 @@ pb:1
 }}
 >
 
+<Box
+sx={{
+display:"flex",
+gap:2
+}}
+>
+
+<Box sx={{display:"flex",gap:2,flexWrap:"wrap"}}>
+
 <Button
 variant="contained"
-onClick={handlePrint}
+onClick={()=>setPrintDialog(true)}
 sx={{
 background:"linear-gradient(135deg,#fde047,#f59e0b)",
 color:"#000",
-fontWeight:900,
-borderRadius:"15px",
-px:5
+fontWeight:900
 }}
 >
-🖨️ طباعة ({selectedOrders.length})
+🖨️ {t("printOptions")}
 </Button>
+
+
+</Box>
+
+
+
+</Box>
 
 </Box>
 
@@ -852,14 +937,23 @@ px:5
                {t("captain")}
               </TableCell>
 
-              <TableCell
-                sx={{
-                  color: "#fde047",
-                  fontWeight: 900,
-                }}
-              >
-               {t("orderAmount")}
-              </TableCell>
+             <TableCell
+ sx={{
+  color: "#fde047",
+  fontWeight: 900,
+ }}
+>
+{t("customerAddress")}
+</TableCell>
+
+<TableCell
+ sx={{
+  color: "#fde047",
+  fontWeight: 900,
+ }}
+>
+{t("branchName")}
+</TableCell>
 
               <TableCell
                 sx={{
@@ -869,23 +963,43 @@ px:5
               >
                {t("tariff")}
               </TableCell>
-              <TableCell
-  sx={{
-    color: "#fde047",
-    fontWeight: 900,
-  }}
+             <TableCell
+sx={{
+color:"#fde047",
+fontWeight:900,
+}}
 >
- {t("AccountingDepartment")}
+{t("AccountingDepartment")}
 </TableCell>
-
 <TableCell
-  sx={{
-    color: "#fde047",
-    fontWeight: 900,
-    width: 70,
-    textAlign: "center",
-  }}
+sx={{
+color:"#fde047",
+fontWeight:900,
+textAlign:"center",
+width:70
+}}
 >
+
+<Checkbox
+checked={
+orders.length > 0 &&
+orders.every(order=>selectedOrders.has(order.id))
+}
+indeterminate={
+orders.some(order=>selectedOrders.has(order.id)) &&
+!orders.every(order=>selectedOrders.has(order.id))
+}
+
+onChange={toggleAllOrders}
+
+sx={{
+color:"#facc15",
+"&.Mui-checked":{
+color:"#facc15"
+}
+}}
+/>
+
 </TableCell>
             </TableRow>
           </TableHead>
@@ -895,7 +1009,7 @@ px:5
                     {orders.length === 0 ? (
             <TableRow>
               <TableCell
-                colSpan={7}
+                colSpan={8}
                 align="center"
                 sx={{
                   py: 8,
@@ -953,14 +1067,24 @@ px:5
                   {order.captainName}
                 </TableCell>
 
-                <TableCell
-                  sx={{
-                    fontWeight: 800,
-                    color: "#4ade80",
-                  }}
-                >
-                  {Number(order.orderAmount || 0).toFixed(2)} JD
-                </TableCell>
+               <TableCell
+ sx={{
+  fontWeight:700,
+  color:"#60a5fa",
+ }}
+>
+ {order.customerAddress || "-"}
+</TableCell>
+
+
+<TableCell
+ sx={{
+  fontWeight:700,
+  color:"#34d399",
+ }}
+>
+{order.branchName || "-"}
+</TableCell>
 
                 <TableCell
                   sx={{
@@ -970,48 +1094,41 @@ px:5
                 >
                   {Number(order.tariff || 0).toFixed(2)} JD
                 </TableCell>
-                 <TableCell
-  sx={{
-    fontWeight: 800,
-    color: "#c084fc",
-  }}
->
-  {Number(order.AccountingDepartment || 0).toFixed(2)} JD
-</TableCell>
-       <TableCell>
-
-<Box
+  <TableCell
 sx={{
-display:"flex",
-justifyContent:"center",
-alignItems:"center",
+fontWeight:800,
+color:"#c084fc",
+}}
+>
+{Number(order.AccountingDepartment || 0).toFixed(2)} JD
+</TableCell>
+
+
+<TableCell
+sx={{
+textAlign:"center"
 }}
 >
 
-<input
-type="checkbox"
-
+<Checkbox
 checked={
-selectedOrders.some(
-(item)=>item.id === order.id
-)
+selectedOrders.has(order.id)
 }
 
-onChange={() => toggleOrder(order)}
-
-style={{
-width:"16px",
-height:"16px",
-cursor:"pointer",
-accentColor:"#facc15",
-transition:"0.2s",
+onChange={()=>{
+toggleOrder(order)
 }}
 
+sx={{
+color:"#facc15",
+"&.Mui-checked":{
+color:"#facc15"
+}
+}}
 />
 
-</Box>
-
 </TableCell>
+    
               </TableRow>
             ))
           )}
@@ -1061,7 +1178,7 @@ transition:"0.2s",
     },
   }}
 >
-  السابق
+ {t("previous")} 
 </Button>
 
 
@@ -1095,7 +1212,8 @@ transition:"0.2s",
 
 <Button
   variant="contained"
-  onClick={() => setPage(page + 1)}
+  disabled={page >= totalPages}
+ onClick={() => setPage(page + 1)}
   sx={{
     minWidth: 120,
     height:45,
@@ -1119,13 +1237,308 @@ transition:"0.2s",
     }
   }}
 >
- التالي
+{t("next")}
 </Button>
 
 
 </Box>
   </Paper>
+<Dialog
+open={printDialog}
+onClose={()=>setPrintDialog(false)}
+fullWidth
+maxWidth="sm"
 
+sx={{
+ "& .MuiBackdrop-root":{
+   backgroundColor:"rgba(0,0,0,.85)"
+ },
+
+ "& .MuiDialog-paper":{
+   background:"#050505 !important"
+ }
+}}
+
+PaperProps={{
+ sx:{
+  background:"#050505 !important",
+  borderRadius:"28px",
+  border:"1px solid rgba(250,204,21,.25)",
+  boxShadow:"0 30px 80px rgba(0,0,0,.9) !important",
+  overflow:"hidden",
+
+  "&::before":{
+    display:"none"
+  }
+ }
+}}
+>
+
+
+<DialogTitle
+sx={{
+  background:"#050505 !important",
+  color:"#fde047",
+  fontWeight:900,
+  fontSize:24,
+  textAlign:"center"
+}}
+>
+🖨️ {t("printSettings")}
+</DialogTitle>
+
+
+
+<DialogContent
+sx={{
+  mt:2,
+
+  background:"#050505",
+
+  color:"#fff",
+
+  px:4,
+
+  py:3
+}}
+>
+
+
+<Typography
+sx={{
+  color:"#facc15",
+
+  fontWeight:900,
+
+  mb:3,
+
+  fontSize:18
+}}
+>
+{t("selectColumns")}
+</Typography>
+
+
+
+<Box
+sx={{
+display:"grid",
+
+gridTemplateColumns:{
+  xs:"1fr",
+  sm:"1fr 1fr"
+},
+
+gap:2
+}}
+>
+
+
+{
+columns.map(col=>(
+
+<Box
+key={col.key}
+sx={{
+display:"flex",
+
+alignItems:"center",
+
+p:1.5,
+
+borderRadius:"18px",
+
+background:
+"rgba(255,255,255,.04)",
+
+border:
+"1px solid rgba(250,204,21,.15)",
+
+transition:".3s",
+
+"&:hover":{
+background:
+"rgba(250,204,21,.10)",
+
+transform:
+"translateY(-3px)",
+
+boxShadow:
+"0 10px 25px rgba(250,204,21,.15)"
+}
+
+}}
+>
+
+
+<Checkbox
+
+checked={selectedColumns.includes(col.key)}
+
+onChange={()=>toggleColumn(col.key)}
+
+sx={{
+
+color:"#facc15",
+
+"&.Mui-checked":{
+color:"#facc15"
+}
+
+}}
+
+/>
+
+
+<Typography
+sx={{
+fontWeight:800,
+
+color:"#fff",
+
+fontSize:15
+}}
+>
+{col.label}
+</Typography>
+
+
+</Box>
+
+))
+}
+
+
+</Box>
+
+
+</DialogContent>
+
+
+
+
+
+<DialogActions
+sx={{
+
+p:3,
+
+gap:2,
+
+background:"#050505",
+
+borderTop:
+"1px solid rgba(250,204,21,.15)",
+
+justifyContent:"center"
+
+}}
+>
+
+
+
+<Button
+onClick={()=>setPrintDialog(false)}
+
+sx={{
+
+height:45,
+
+px:4,
+
+borderRadius:"14px",
+
+fontWeight:900,
+
+color:"#fde047",
+
+background:
+"rgba(255,255,255,.06)",
+
+border:
+"1px solid rgba(250,204,21,.35)",
+
+transition:".3s",
+
+"&:hover":{
+
+background:
+"rgba(250,204,21,.15)",
+
+transform:
+"translateY(-3px)"
+
+}
+
+}}
+
+>
+✖ إلغاء
+</Button>
+
+
+
+
+
+<Button
+
+variant="contained"
+
+disabled={!printAll && selectedOrders.size === 0}
+
+onClick={()=>{
+
+handlePrint(printAll);
+
+setPrintDialog(false);
+
+}}
+
+sx={{
+
+height:45,
+
+px:5,
+
+borderRadius:"14px",
+
+fontWeight:900,
+
+color:"#0f0101",
+
+background:
+"linear-gradient(135deg,#fde047,#facc15,#f59e0b)",
+
+boxShadow:
+"0 10px 30px rgba(250,204,21,.35)",
+
+transition:".3s",
+
+"&:hover":{
+
+background:
+"linear-gradient(135deg,#fef08a,#fde047,#facc15)",
+
+transform:
+"translateY(-3px)",
+
+boxShadow:
+"0 15px 40px rgba(250,204,21,.5)"
+
+}
+
+}}
+
+>
+🖨️ طباعة
+</Button>
+
+
+
+</DialogActions>
+
+
+</Dialog>
 </Box>
 );
 }

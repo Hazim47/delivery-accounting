@@ -210,7 +210,9 @@ return (
       <CircularProgress sx={{ color: "#facc15" }} />
     </Box>
   ) : (
-    <Table>
+    <Table  sx={{
+      minWidth: 1000,
+    }}>
       <TableHead>
         <TableRow sx={{ background: "linear-gradient(90deg,#0a0a0a,#111)" }}>
           {[
@@ -220,6 +222,8 @@ return (
             t("skipped"),
             t("restaurants"),
             t("drivers"),
+            t("tariff"),
+            t("accountingCompensation"),
             t("date"),
             ...(isMobile ? [] : [t("action")])
           ].map((h) => (
@@ -290,7 +294,14 @@ return (
             <TableCell>{statement.restaurantsCreated}</TableCell>
 
             <TableCell>{statement.driversCreated}</TableCell>
+<TableCell>
+ {Number(statement.totalTariff || 0).toFixed(2)}
+</TableCell>
 
+
+<TableCell>
+ {statement.totalAccounting || 0}
+</TableCell>
             <TableCell sx={{ whiteSpace: "nowrap" }}>
               {new Date(statement.createdAt).toLocaleString()}
             </TableCell>
@@ -365,7 +376,7 @@ return (
             </TableCell>
             )}
             {isMobile && (
-<TableCell colSpan={8}>
+<TableCell colSpan={10}>
   <Box
     sx={{
       display:"flex",

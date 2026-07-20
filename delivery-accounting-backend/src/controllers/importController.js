@@ -75,7 +75,7 @@ const toNumber = (val) => {
   Object.values(row).some(value => String(value).trim() !== "")
 );
 
-    const importLog =
+ const importLog =
       await ImportLog.create(
         {
           fileName:
@@ -92,6 +92,10 @@ const toNumber = (val) => {
           restaurantsCreated: 0,
 
           driversCreated: 0,
+
+          totalTariff: 0,
+
+          totalAccounting: 0,
         },
         { transaction }
       );
@@ -404,6 +408,7 @@ if (driverName) {
           driversCreated++;
         }
       }
+      
 totalTariff += toNumber(
   row["التعرفه"]
 );
@@ -452,16 +457,32 @@ totalAccounting += toNumber(
           ] ||
           "",
 
-        customerAddress:
-          row[
-            "منطقة الزبون"
-          ] || "",
+  customerAddress:
+  row["عنوان الزبون"] ||
+  row["منطقه الزبون - ادخال مطعم"] ||
+  row["منطقة الزبون - ادخال مطعم"] ||
+  "",
+
+
+customerLocation:
+  row["موقع الزبون"] ||
+  row["لوكيشن الزبون"] ||
+  row["رابط موقع الزبون"] ||
+  "",
+
+
+restaurantLocation:
+  row["موقع المطعم"] ||
+  row["لوكيشن المطعم"] ||
+  "",
 startTime: parseExcelTime(row["وقت البدايه"]),
 
 endTime: parseExcelTime(row["وقت النهايه"]),
 
 branchName:
-  row["الفرع"] || "",
+  row["الفرع"] ||
+  row["فرع"] ||
+  "",
 
 captainPhone:
   row["رقم الهاتف"] || "",
@@ -618,7 +639,7 @@ for(let i = 0; i < restaurantUpdates.length; i += 500){
       );
     }
 
-   await importLog.update(
+  await importLog.update(
 {
   status: "completed",
 
@@ -628,9 +649,18 @@ for(let i = 0; i < restaurantUpdates.length; i += 500){
   skippedOrders:
     skipped,
 
-  restaurantsCreated: restaurantNames.size,
+  restaurantsCreated:
+    restaurantNames.size,
 
-  driversCreated: driverNames.size,
+  driversCreated:
+    driverNames.size,
+
+  totalTariff:
+    totalTariff,
+
+  totalAccounting:
+    totalAccounting,
+
 },
 { transaction }
 );

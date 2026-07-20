@@ -166,6 +166,15 @@ distance: {
 cancelReason: {
   type: DataTypes.TEXT,
 },
+customerLocation:{
+ type: DataTypes.TEXT,
+ allowNull:true
+},
+
+restaurantLocation:{
+ type: DataTypes.TEXT,
+ allowNull:true
+},
 restaurantsCount: {
  type: DataTypes.INTEGER,
  defaultValue: 0

@@ -62,6 +62,7 @@ if (from && to) {
 // الطلبات
 let orders = [];
 let stats = {};
+let totalPages = 1;
 
 try {
 
@@ -70,31 +71,38 @@ try {
   const offset = (page - 1) * limit;
 
 
-  [orders, stats] = await Promise.all([
+  const [ordersResult, statsResult] = await Promise.all([
 
-    Order.findAll({
-  where,
- attributes: [
-  "id",
-  "orderDate",
-  "customerName",
-  "captainName",
-  "orderAmount",
-  "driverEarning",
-  "restaurantEarning",
-  "tariff",
-  "AccountingDepartment",
-  "status",
-],
-  order: [["orderDate", "DESC"]],
-  limit,
-  offset,
-  raw: true,
-}),
+    Order.findAndCountAll({
+      where,
+
+      attributes: [
+        "id",
+        "orderDate",
+        "customerName",
+        "captainName",
+        "customerAddress",
+        "branchName",
+        "orderAmount",
+        "driverEarning",
+        "restaurantEarning",
+        "tariff",
+        "AccountingDepartment",
+        "status",
+      ],
+
+      order: [["orderDate", "DESC"]],
+
+      limit,
+      offset,
+
+      raw:true,
+    }),
 
 
     Order.findOne({
       where,
+
       attributes: [
 
         [
@@ -146,13 +154,22 @@ try {
         ],
 
       ],
-      raw: true
+
+      raw:true
     })
 
   ]);
 
 
-} catch (e) {
+  orders = ordersResult.rows;
+
+  totalPages = Math.ceil(
+    ordersResult.count / limit
+  );
+
+  stats = statsResult;
+
+}catch (e) {
 
   
   console.log(e);
@@ -160,18 +177,22 @@ try {
 
 }
 
-    res.json({
-      restaurant,
-     stats: {
-  totalOrders: Number(stats.totalOrders || 0),
-  totalSales: Number(stats.totalSales || 0),
-  totalCaptainDiscount: Number(stats.totalCaptainDiscount || 0),
-  restaurantNet: Number(stats.restaurantNet || 0),
-  totalTariff: Number(stats.totalTariff || 0),
-  totalAccountingDepartment: Number(stats.totalAccountingDepartment || 0),
-},
-      orders,
-    });
+res.json({
+  restaurant,
+
+  stats: {
+    totalOrders: Number(stats.totalOrders || 0),
+    totalSales: Number(stats.totalSales || 0),
+    totalCaptainDiscount: Number(stats.totalCaptainDiscount || 0),
+    restaurantNet: Number(stats.restaurantNet || 0),
+    totalTariff: Number(stats.totalTariff || 0),
+    totalAccountingDepartment: Number(stats.totalAccountingDepartment || 0),
+  },
+
+  orders,
+
+  totalPages
+});
  
   } catch (err) {
 console.log(err);
