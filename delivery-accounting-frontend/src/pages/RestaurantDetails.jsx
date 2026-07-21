@@ -7,6 +7,8 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { format } from "date-fns";
 import enGB from "date-fns/locale/en-GB";
 import { useTranslation } from "react-i18next";
+import * as XLSX from "xlsx";
+import autoTable from "jspdf-autotable";
 import {
   Box,
   Typography,
@@ -179,6 +181,11 @@ return [...prev,key];
 });
 
 };
+const getOrdersToExport = (all = false) => {
+  return all
+    ? orders
+    : orders.filter(order => selectedOrders.has(order.id));
+};
 const handlePrint = (printAll = false) => {
 
   const ordersToPrint = printAll 
@@ -336,6 +343,51 @@ window.print();
 printWindow.document.close();
 
 };
+const exportExcel = (all = false) => {
+  const ordersToExport = getOrdersToExport(all);
+
+  if (ordersToExport.length === 0) {
+    alert(t("noOrdersToPrint"));
+    return;
+  }
+
+  const columnLabels = {
+    orderDate: t("date"),
+    customerName: t("customer"),
+    captainName: t("captain"),
+    customerAddress: t("customerAddress"),
+    branchName: t("branchName"),
+    tariff: t("tariff"),
+    AccountingDepartment: t("AccountingDepartment"),
+  };
+
+  const data = ordersToExport.map(order => {
+    const row = {};
+
+    selectedColumns.forEach(col => {
+      let value = order[col] ?? "";
+
+      if (col === "tariff" || col === "AccountingDepartment") {
+        value = Number(value || 0).toFixed(2);
+      }
+
+      row[columnLabels[col]] = value;
+    });
+
+    return row;
+  });
+
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+
+  XLSX.utils.book_append_sheet(wb, ws, "Orders");
+
+  XLSX.writeFile(
+    wb,
+    `${restaurant.name}_${format(new Date(), "yyyy-MM-dd")}.xlsx`
+  );
+};
+
 return (
   <Box
     sx={{
@@ -1481,56 +1533,41 @@ transform:
 
 
 <Button
-
-variant="contained"
-
-disabled={!printAll && selectedOrders.size === 0}
-
-onClick={()=>{
-
-handlePrint(printAll);
-
-setPrintDialog(false);
-
-}}
-
-sx={{
-
-height:45,
-
-px:5,
-
-borderRadius:"14px",
-
-fontWeight:900,
-
-color:"#0f0101",
-
-background:
-"linear-gradient(135deg,#fde047,#facc15,#f59e0b)",
-
-boxShadow:
-"0 10px 30px rgba(250,204,21,.35)",
-
-transition:".3s",
-
-"&:hover":{
-
-background:
-"linear-gradient(135deg,#fef08a,#fde047,#facc15)",
-
-transform:
-"translateY(-3px)",
-
-boxShadow:
-"0 15px 40px rgba(250,204,21,.5)"
-
-}
-
-}}
-
+  variant="contained"
+  disabled={!printAll && selectedOrders.size === 0}
+  onClick={() => {
+    handlePrint(printAll);
+    setPrintDialog(false);
+  }}
+  sx={{
+    height: 45,
+    px: 3,
+    borderRadius: "14px",
+    fontWeight: 900,
+    color: "#000",
+    background: "linear-gradient(135deg,#fde047,#facc15,#f59e0b)",
+  }}
 >
-🖨️ طباعة
+  🖨️ {t("print")}
+</Button>
+<Button
+  variant="contained"
+  disabled={!printAll && selectedOrders.size === 0}
+  onClick={() => {
+    exportExcel(printAll);
+    setPrintDialog(false);
+  }}
+  sx={{
+    height: 45,
+    px: 3,
+    borderRadius: "14px",
+    fontWeight: 900,
+    color: "#fff",
+    background: "#16a34a",
+    "&:hover": { background: "#15803d" },
+  }}
+>
+  📊 Excel
 </Button>
 
 
