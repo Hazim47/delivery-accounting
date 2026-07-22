@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import API from "../api/axios";
 import { useTranslation } from "react-i18next";
+import { Pagination, PaginationItem } from "@mui/material";
 import {
   Box,
   Button,
@@ -15,7 +16,7 @@ import {
   Paper,
   TextField,
   Chip,
-  Pagination
+  CircularProgress,
 } from "@mui/material";
 
 
@@ -28,14 +29,16 @@ function Restaurants() {
   const { t, i18n } = useTranslation();
 
   const [restaurants, setRestaurants] = useState([]);
-  const [page,setPage] = useState(1);
 const [totalPages,setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
-const [searchInput,setSearchInput]=useState("");
+const [searchParams] = useSearchParams();
 
-  /* Search only */
-  const [search, setSearch] = useState("");
+const initialPage = Number(searchParams.get("page")) || 1;
+const initialSearch = searchParams.get("search") || "";
 
+const [page,setPage] = useState(initialPage);
+const [search,setSearch] = useState(initialSearch);
+const [searchInput,setSearchInput] = useState(initialSearch);
   /* ============================
       LOAD RESTAURANTS
   ============================ */
@@ -52,7 +55,7 @@ const fetchRestaurants = async () => {
 
  setRestaurants(res.data.restaurants || []);
  setTotalPages(res.data.pages || 1);
-
+console.log(res.data.restaurants);
 
  } catch(err){
 
@@ -82,18 +85,10 @@ useEffect(()=>{
 
  },500);
 
-
  return ()=>clearTimeout(timer);
 
-},[searchInput]);
-  /* ============================
-      SEARCH ONLY (NAME)
-  ============================ */
-
+},[searchInput, search]);
 const filteredRestaurants = restaurants;
-    if (loading)
-    return <h2>{t("loading")}</h2>;
-
   return (
   <Box
     sx={{
@@ -164,6 +159,16 @@ const filteredRestaurants = restaurants;
         border: "1px solid rgba(250,204,21,.12)",
       }}
     >
+      {loading && (
+  <Box
+    sx={{
+      textAlign:"center",
+      p:3
+    }}
+  >
+    <CircularProgress color="warning" />
+  </Box>
+)}
       <TextField
         fullWidth
         label={t("namerestaurants")}
@@ -336,21 +341,21 @@ onChange={(e)=>{
     fontSize: 16,
   }}
 >
-  {r.lastOrderDate
-    ? new Date(
-        String(r.lastOrderDate).substring(0,10) + "T12:00:00"
-      ).toLocaleDateString(
-        i18n.language === "ar"
-          ? "ar-EG"
-          : "en-US",
-        {
-          year: "numeric",
-          month: "long",
-          day: "numeric",
-        }
-      )
-    : "-"
-  }
+{r.lastOrderDate
+  ? new Date(
+      String(r.lastOrderDate).substring(0,10) + "T12:00:00"
+    ).toLocaleDateString(
+      i18n.language === "ar"
+        ? "ar-EG"
+        : "en-US",
+      {
+        year:"numeric",
+        month:"long",
+        day:"numeric",
+      }
+    )
+  : "-"
+}
 </TableCell>
 
 
@@ -399,11 +404,11 @@ onChange={(e)=>{
 
             <Button
               startIcon={<VisibilityIcon />}
-              onClick={() =>
-                navigate(
-                  `/restaurants/${r.id}`
-                )
-              }
+onClick={() =>
+  navigate(
+    `/restaurants/${r.id}?page=${page}&search=${search}`
+  )
+}
               sx={{
                 px: 3,
                 py: 1,
@@ -451,25 +456,65 @@ onChange={(e)=>{
    justifyContent:"center"
  }}
 >
- <Pagination
-   count={totalPages}
-   page={page}
-   onChange={(e,value)=>{
-     setPage(value);
-   }}
-   color="primary"
-   size="large"
-   sx={{
-     "& .MuiPaginationItem-root":{
-       color:"#fff",
-       borderColor:"rgba(250,204,21,.3)"
-     },
-     "& .Mui-selected":{
-       background:"#facc15 !important",
-       color:"#000"
-     }
-   }}
- />
+<Box
+ sx={{
+   mt:4,
+   display:"flex",
+   justifyContent:"center"
+ }}
+>
+<Pagination
+  count={totalPages}
+  page={page}
+  siblingCount={0}
+  boundaryCount={0}
+  renderItem={(item) => {
+    if (
+      item.type === "page" &&
+      item.page !== page
+    ) {
+      return null;
+    }
+
+    return <PaginationItem {...item} />;
+  }}
+  onChange={(e,value)=>{
+
+    setPage(value);
+
+    const params = new URLSearchParams();
+
+    if(search){
+      params.set("search", search);
+    }
+
+    params.set("page", value);
+
+    window.history.replaceState(
+      null,
+      "",
+      `/restaurants?${params.toString()}`
+    );
+
+  }}
+  color="primary"
+  size="large"
+  sx={{
+    "& .PaginationItem-root":{
+      color:"#fff",
+    },
+
+    "& .MuiPaginationItem-root":{
+      color:"#fff",
+    },
+
+    "& .Mui-selected":{
+      background:"#facc15 !important",
+      color:"#000"
+    }
+  }}
+/>
+</Box>
 </Box>
   </Box>
 );

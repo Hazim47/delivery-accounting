@@ -79,6 +79,8 @@ try {
       attributes: [
         "id",
         "orderDate",
+        "startTime",
+        "endTime",
         "customerName",
         "captainName",
         "customerAddress",
@@ -236,41 +238,54 @@ const getRestaurants = async (req,res)=>{
 
   const limit = 50;
   const page = Number(req.query.page) || 1;
-  const offset = (page-1)*limit;
+  const offset = (page - 1) * limit;
 
   const search = req.query.search || "";
 
-
-  const where = {};
-
-  if(search){
-    where.name = {
-      [Op.iLike]: `%${search}%`
-    };
-  }
+  const searchValue = `%${search}%`;
 
 
-  const {count, rows} = await Restaurant.findAndCountAll({
+  const [rows] = await sequelize.query(`
+    SELECT 
+      r.id,
+      r.name,
+      r.phone,
+      r.address,
+      r.active,
+      r."commissionRate",
+      MAX(o."orderDate") AS "lastOrderDate"
 
-    where,
+    FROM "Restaurants" r
 
-    attributes:[
-      "id",
-      "name",
-      "phone",
-      "address",
-      "active",
-      "commissionRate",
-      "lastOrderDate",
-    ],
+    LEFT JOIN "Orders" o
+      ON o."RestaurantId" = r.id
 
-    order:[
-      ["lastOrderDate","DESC"]
-    ],
+    WHERE r.name ILIKE :search
 
-    limit,
-    offset,
-    raw:true
+    GROUP BY r.id
+
+    ORDER BY r.id DESC
+
+    LIMIT :limit
+    OFFSET :offset
+
+  `,{
+    replacements:{
+      search: searchValue,
+      limit,
+      offset
+    }
+  });
+
+
+  const [countResult] = await sequelize.query(`
+    SELECT COUNT(*)::int AS total
+    FROM "Restaurants"
+    WHERE name ILIKE :search
+  `,{
+    replacements:{
+      search:searchValue
+    }
   });
 
 
@@ -278,9 +293,11 @@ const getRestaurants = async (req,res)=>{
 
     restaurants: rows,
 
-    pages: Math.ceil(count / limit),
+    pages: Math.ceil(
+      countResult[0].total / limit
+    ),
 
-    total: count
+    total: countResult[0].total
 
   });
 
@@ -336,7 +353,113 @@ const deleteRestaurant = async (req, res) => {
     res.status(500).json({ message: "Server Error" });
   }
 };
+const getRestaurantOrderIds = async (req, res) => {
+  try {
 
+    const { id } = req.params;
+    const { from, to } = req.query;
+
+    const where = {
+      RestaurantId: id,
+    };
+
+    if (from && to) {
+      where.orderDate = {
+        [Op.between]: [from, to],
+      };
+    } else if (from) {
+      where.orderDate = {
+        [Op.gte]: from,
+      };
+    } else if (to) {
+      where.orderDate = {
+        [Op.lte]: to,
+      };
+    }
+
+    const orders = await Order.findAll({
+      where,
+      attributes: ["id"],
+      raw: true,
+    });
+
+    res.json(orders.map(o => o.id));
+
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({
+      message: "Server Error",
+    });
+  }
+};
+const getRestaurantAllOrders = async (req, res) => {
+  try {
+
+    const { id } = req.params;
+    const { from, to } = req.query;
+
+
+    const where = {
+      RestaurantId: id,
+    };
+
+
+    if (from && to) {
+      where.orderDate = {
+        [Op.between]: [from, to],
+      };
+    } 
+    else if (from) {
+      where.orderDate = {
+        [Op.gte]: from,
+      };
+    } 
+    else if (to) {
+      where.orderDate = {
+        [Op.lte]: to,
+      };
+    }
+
+
+    const orders = await Order.findAll({
+
+      where,
+
+      attributes: [
+        "id",
+        "orderDate",
+        "startTime",
+        "endTime",
+        "customerName",
+        "captainName",
+        "customerAddress",
+        "branchName",
+        "tariff",
+        "AccountingDepartment",
+      ],
+
+      order:[
+        ["orderDate","DESC"]
+      ],
+
+      raw:true
+
+    });
+
+
+    res.json(orders);
+
+
+  } catch(error){
+
+    console.log(error);
+
+    res.status(500).json({
+      message:"Server Error"
+    });
+
+  }
+};
 module.exports = {
   createRestaurant,
   getRestaurants,
@@ -344,4 +467,6 @@ module.exports = {
   deleteRestaurant,
   getRestaurantDetails,
   getRestaurantById,
+  getRestaurantOrderIds,
+  getRestaurantAllOrders,
 };

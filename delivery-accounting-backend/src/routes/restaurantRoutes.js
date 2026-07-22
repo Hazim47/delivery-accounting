@@ -10,7 +10,9 @@ const {
   updateRestaurant,
   deleteRestaurant,
   getRestaurantById,
-  getRestaurantDetails
+  getRestaurantDetails,
+  getRestaurantOrderIds,
+  getRestaurantAllOrders
 } = require("../controllers/restaurantController");
 
 // كل الأدوار يقدروا يشوفوا
@@ -19,6 +21,16 @@ router.get(
   "/:id/details",
   authMiddleware,
   getRestaurantDetails
+);
+router.get(
+ "/:id/all-orders",
+ authMiddleware,
+ getRestaurantAllOrders
+);
+router.get(
+  "/:id/order-ids",
+  authMiddleware,
+  getRestaurantOrderIds
 );
 // فقط ADMIN و ACCOUNTANT
 router.post(

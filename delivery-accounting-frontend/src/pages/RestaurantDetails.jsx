@@ -1,5 +1,4 @@
 import { useEffect, useState, useCallback,useMemo  } from "react";
-import { useParams } from "react-router-dom";
 import API from "../api/axios";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFnsV2";
@@ -8,7 +7,8 @@ import { format } from "date-fns";
 import enGB from "date-fns/locale/en-GB";
 import { useTranslation } from "react-i18next";
 import * as XLSX from "xlsx";
-import autoTable from "jspdf-autotable";
+import { useParams, useNavigate } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 import {
   Box,
   Typography,
@@ -32,6 +32,9 @@ import {
 import SearchIcon from "@mui/icons-material/Search";
 
 function RestaurantDetails() {
+  const [searchParams] = useSearchParams();
+
+const restaurantsPage = searchParams.get("page") || 1;
   const { id } = useParams();
   const { t } = useTranslation();
   const [restaurant, setRestaurant] = useState(null);
@@ -45,8 +48,13 @@ const [toDate, setToDate] = useState(null);
 const [printDialog,setPrintDialog] = useState(false);
 const [printAll,setPrintAll] = useState(false);
 const [totalPages,setTotalPages]=useState(1);
+const [allOrders,setAllOrders] = useState([]);
+const navigate = useNavigate();
+const restaurantsSearch = searchParams.get("search") || "";
 const [selectedColumns, setSelectedColumns] = useState([
   "orderDate",
+  "startTime",
+  "endTime",
   "customerName",
   "captainName",
   "customerAddress",
@@ -56,6 +64,8 @@ const [selectedColumns, setSelectedColumns] = useState([
 ]);
 const columns = useMemo(()=>[
   {key:"orderDate", label:t("date")},
+  {key:"startTime", label:t("startTime")},
+  {key:"endTime", label:t("endTime")},
   {key:"customerName", label:t("customer")},
   {key:"captainName", label:t("captain")},
   {key:"customerAddress", label:t("customerAddress")},
@@ -138,72 +148,141 @@ return next;
 });
 
 };
+const toggleColumn = (key) => {
+  setSelectedColumns(prev => {
 
-const toggleAllOrders = ()=>{
+    if (prev.includes(key)) {
 
-setSelectedOrders(prev=>{
+      if (prev.length === 1) {
+        return prev;
+      }
 
-const next = new Set(prev);
+      return prev.filter(col => col !== key);
 
-const allSelected = orders.every(
-(order)=>next.has(order.id)
-);
+    }
 
+    return [...prev, key];
 
-orders.forEach(order=>{
-
-if(allSelected){
-next.delete(order.id);
-}
-else{
-next.add(order.id);
-}
-
-});
-
-
-return next;
-
-});
-
+  });
 };
+const toggleAllOrders = async () => {
 
-const toggleColumn = (key)=>{
+  try {
 
-setSelectedColumns(prev=>{
+    const params = new URLSearchParams();
 
-if(prev.includes(key)){
-return prev.filter(c=>c!==key);
-}
+    if (fromDate) {
+      params.append("from", format(fromDate, "yyyy-MM-dd"));
+    }
 
-return [...prev,key];
+    if (toDate) {
+      params.append("to", format(toDate, "yyyy-MM-dd"));
+    }
 
-});
+    console.log("calling ids api");
+
+    const res = await API.get(
+      `/restaurants/${id}/order-ids?${params.toString()}`
+    );
+
+    console.log("ids response", res.data);
+
+    const ids = res.data;
+
+    setSelectedOrders(prev => {
+
+      const next = new Set(prev);
+
+      const allSelected = ids.every(orderId =>
+        next.has(orderId)
+      );
+
+      if(allSelected){
+        ids.forEach(orderId=>{
+          next.delete(orderId);
+        });
+      }else{
+        ids.forEach(orderId=>{
+          next.add(orderId);
+        });
+      }
+
+      return next;
+
+    });
+
+
+  } catch(error){
+
+    console.log("SELECT ALL ERROR", error);
+
+  }
 
 };
 const getOrdersToExport = (all = false) => {
-  return all
+
+  const ordersToPrint = all
     ? orders
     : orders.filter(order => selectedOrders.has(order.id));
+
+  return ordersToPrint;
 };
-const handlePrint = (printAll = false) => {
+const handlePrint = async (printAll = false) => {
 
-  const ordersToPrint = printAll 
-? orders 
-: orders.filter(order=>selectedOrders.has(order.id));
+  let ordersToPrint = [];
+
+  try {
+
+ const params = new URLSearchParams();
+
+if(fromDate){
+  params.append(
+    "from",
+    format(fromDate,"yyyy-MM-dd")
+  );
+}
+
+if(toDate){
+  params.append(
+    "to",
+    format(toDate,"yyyy-MM-dd")
+  );
+}
 
 
-  if(ordersToPrint.length === 0){
-    alert(t("noOrdersToPrint"));
-    return;
-  }
+const res = await API.get(
+  `/restaurants/${id}/all-orders?${params.toString()}`
+);
 
 
-  const printWindow = window.open("", "_blank");
+const allOrdersFromServer = res.data;
 
 
+// إذا طباعة الكل
+if(printAll){
+
+  ordersToPrint = allOrdersFromServer;
+
+}
+// إذا طباعة المحدد
+else{
+
+  ordersToPrint = allOrdersFromServer.filter(order =>
+    selectedOrders.has(order.id)
+  );
+
+}
+
+
+    if(ordersToPrint.length === 0){
+      alert(t("noOrdersToPrint"));
+      return;
+    }
+const printWindow = window.open("", "_blank");
 const columnLabels = {
     orderDate:t("date"),
+    startTime:t("startTime"),
+    endTime:t("endTime"),
     customerName:t("customer"),
     captainName:t("captain"),
     customerAddress:t("customerAddress"),
@@ -340,52 +419,179 @@ window.print();
 `);
 
 
-printWindow.document.close();
+    printWindow.document.close();
 
-};
-const exportExcel = (all = false) => {
-  const ordersToExport = getOrdersToExport(all);
+  } catch(error) {
 
-  if (ordersToExport.length === 0) {
-    alert(t("noOrdersToPrint"));
-    return;
+    console.log("PRINT ERROR", error);
+
   }
+};
+const exportExcel = async (all = false) => {
 
-  const columnLabels = {
-    orderDate: t("date"),
-    customerName: t("customer"),
-    captainName: t("captain"),
-    customerAddress: t("customerAddress"),
-    branchName: t("branchName"),
-    tariff: t("tariff"),
-    AccountingDepartment: t("AccountingDepartment"),
-  };
+  let ordersToExport = [];
 
-  const data = ordersToExport.map(order => {
-    const row = {};
+  try {
 
-    selectedColumns.forEach(col => {
-      let value = order[col] ?? "";
+    if (all) {
 
-      if (col === "tariff" || col === "AccountingDepartment") {
-        value = Number(value || 0).toFixed(2);
+      const params = new URLSearchParams();
+
+      if (fromDate) {
+        params.append(
+          "from",
+          format(fromDate, "yyyy-MM-dd")
+        );
       }
 
-      row[columnLabels[col]] = value;
+      if (toDate) {
+        params.append(
+          "to",
+          format(toDate, "yyyy-MM-dd")
+        );
+      }
+
+
+      const res = await API.get(
+        `/restaurants/${id}/all-orders?${params.toString()}`
+      );
+
+
+      ordersToExport = res.data;
+
+
+    } else {
+
+ const params = new URLSearchParams();
+
+ if(fromDate){
+   params.append(
+    "from",
+    format(fromDate,"yyyy-MM-dd")
+   );
+ }
+
+ if(toDate){
+   params.append(
+    "to",
+    format(toDate,"yyyy-MM-dd")
+   );
+ }
+
+
+ const res = await API.get(
+   `/restaurants/${id}/all-orders?${params.toString()}`
+ );
+
+
+ ordersToExport = res.data.filter(order =>
+   selectedOrders.has(order.id)
+ );
+
+}
+
+
+    if (ordersToExport.length === 0) {
+
+      alert(t("noOrdersToPrint"));
+
+      return;
+
+    }
+
+
+    const columnLabels = {
+
+      orderDate: t("date"),
+
+      startTime: t("startTime"),
+
+      endTime: t("endTime"),
+
+      customerName: t("customer"),
+
+      captainName: t("captain"),
+
+      customerAddress: t("customerAddress"),
+
+      branchName: t("branchName"),
+
+      tariff: t("tariff"),
+
+      AccountingDepartment: t("AccountingDepartment"),
+
+    };
+
+
+    const data = ordersToExport.map(order => {
+
+      const row = {};
+
+
+      selectedColumns.forEach(col => {
+
+
+        let value = order[col] ?? "";
+
+
+        if (
+          col === "tariff" ||
+          col === "AccountingDepartment"
+        ) {
+
+          value =
+            Number(value || 0)
+            .toFixed(2);
+
+        }
+
+
+        row[columnLabels[col]] = value;
+
+
+      });
+
+
+      return row;
+
+
     });
 
-    return row;
-  });
 
-  const ws = XLSX.utils.json_to_sheet(data);
-  const wb = XLSX.utils.book_new();
 
-  XLSX.utils.book_append_sheet(wb, ws, "Orders");
+    const ws = XLSX.utils.json_to_sheet(data);
 
-  XLSX.writeFile(
-    wb,
-    `${restaurant.name}_${format(new Date(), "yyyy-MM-dd")}.xlsx`
-  );
+
+    const wb = XLSX.utils.book_new();
+
+
+    XLSX.utils.book_append_sheet(
+      wb,
+      ws,
+      "Orders"
+    );
+
+
+    XLSX.writeFile(
+      wb,
+      `${restaurant.name}_${format(
+        new Date(),
+        "yyyy-MM-dd"
+      )}.xlsx`
+    );
+
+
+  } catch(error) {
+
+    console.log(
+      "EXPORT EXCEL ERROR",
+      error
+    );
+
+    alert("Excel export failed");
+
+  }
+
 };
 
 return (
@@ -442,31 +648,67 @@ return (
           alignItems: "center",
         }}
       >
-        <Box>
-          
-          <Typography
-            variant="h3"
-            sx={{
-              fontWeight: 900,
-              mb: 1,
-              background:
-                "linear-gradient(90deg,#fde047,#facc15,#f59e0b)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-            }}
-          >
-            {restaurant.name}
-          </Typography>
+     <Box>
+  <Typography
+    variant="h3"
+    sx={{
+      fontWeight: 900,
+      mb: 1,
+      background:
+        "linear-gradient(90deg,#fde047,#facc15,#f59e0b)",
+      WebkitBackgroundClip: "text",
+      WebkitTextFillColor: "transparent",
+    }}
+  >
+    {restaurant.name}
+  </Typography>
 
-          <Typography
-            sx={{
-              color: "#9ca3af",
-              fontSize: 16,
-            }}
-          >
-           {t("restaurantDetailsSubtitle")}
-          </Typography>
-        </Box>
+  <Typography
+    sx={{
+      color: "#9ca3af",
+      fontSize: 16,
+    }}
+  >
+    {t("restaurantDetailsSubtitle")}
+  </Typography>
+</Box>
+
+
+<Button
+  onClick={() => navigate(
+ `/restaurants?page=${restaurantsPage}&search=${restaurantsSearch}`
+)}
+  sx={{
+    px: 4,
+    py: 1.5,
+    borderRadius: "18px",
+
+    fontWeight: 900,
+    fontSize: 16,
+
+    color: "#000",
+
+    background:
+      "linear-gradient(135deg,#fde047,#facc15,#f59e0b)",
+
+    boxShadow:
+      "0 15px 35px rgba(250,204,21,.25)",
+
+    transition: ".35s",
+
+    "&:hover":{
+      transform:"translateY(-4px) scale(1.03)",
+      boxShadow:
+        "0 25px 55px rgba(250,204,21,.4)",
+    },
+
+    "&:active":{
+      transform:"scale(.97)",
+    }
+  }}
+>
+  {t("back")}
+</Button>
 
       </Box>
     </Paper>
@@ -735,57 +977,6 @@ return (
           </Typography>
         </Paper>
       </Grid>
-
-      <Grid item xs={12} md={4}>
-        <Paper
-          elevation={0}
-          sx={{
-            p: 3,
-            height: "100%",
-            borderRadius: "24px",
-            background:
-              "linear-gradient(145deg,rgba(16,185,129,.15),rgba(255,255,255,.04))",
-            border: "1px solid rgba(16,185,129,.25)",
-            backdropFilter: "blur(18px)",
-            transition: ".35s",
-            "&:hover": {
-              transform: "translateY(-6px)",
-              boxShadow: "0 20px 50px rgba(16,185,129,.2)",
-            },
-          }}
-        >
-          <Typography
-            sx={{
-              color: "#6ee7b7",
-              fontWeight: 700,
-              fontSize: 15,
-              mb: 1,
-            }}
-          >
-            💰 {t("totalSales")}
-          </Typography>
-
-          <Typography
-            sx={{
-              fontSize: 34,
-              fontWeight: 900,
-              color: "#fff",
-            }}
-          >
-           {Number(stats.totalSales || 0).toFixed(2)} JD
-          </Typography>
-
-          <Typography
-            sx={{
-              mt: 1,
-              color: "#9ca3af",
-            }}
-          >
-           {t("deliveredOrdersValue")}
-          </Typography>
-        </Paper>
-      </Grid>
-
       <Grid item xs={12} md={4}>
         <Paper
           elevation={0}
@@ -961,6 +1152,14 @@ fontWeight:900
                   "linear-gradient(90deg,#1f2937,#09090b)",
               }}
             >
+            <TableCell
+  sx={{
+    color: "#fde047",
+    fontWeight: 900,
+  }}
+>
+#
+</TableCell>
               <TableCell
                 sx={{
                   color: "#fde047",
@@ -970,7 +1169,23 @@ fontWeight:900
               >
                {t("date")}
               </TableCell>
+<TableCell
+ sx={{
+  color:"#fde047",
+  fontWeight:900,
+ }}
+>
+{t("startTime")}
+</TableCell>
 
+<TableCell
+ sx={{
+  color:"#fde047",
+  fontWeight:900,
+ }}
+>
+{t("endTime")}
+</TableCell>
               <TableCell
                 sx={{
                   color: "#fde047",
@@ -1034,12 +1249,12 @@ width:70
 
 <Checkbox
 checked={
-orders.length > 0 &&
-orders.every(order=>selectedOrders.has(order.id))
+  stats.totalOrders > 0 &&
+  selectedOrders.size === stats.totalOrders
 }
 indeterminate={
-orders.some(order=>selectedOrders.has(order.id)) &&
-!orders.every(order=>selectedOrders.has(order.id))
+  selectedOrders.size > 0 &&
+  selectedOrders.size < stats.totalOrders
 }
 
 onChange={toggleAllOrders}
@@ -1060,8 +1275,9 @@ color:"#facc15"
 
                     {orders.length === 0 ? (
             <TableRow>
+            
               <TableCell
-                colSpan={8}
+                colSpan={11}
                 align="center"
                 sx={{
                   py: 8,
@@ -1098,6 +1314,14 @@ color:"#facc15"
                   },
                 }}
               >
+              <TableCell
+  sx={{
+    fontWeight: 800,
+    color: "#fde047",
+  }}
+>
+  {(page - 1) * 100 + index + 1}
+</TableCell>
                 <TableCell
                   sx={{
                     fontWeight: 700,
@@ -1106,7 +1330,24 @@ color:"#facc15"
                 >
                   {order.orderDate}
                 </TableCell>
+<TableCell
+ sx={{
+  fontWeight:700,
+  color:"#60a5fa",
+ }}
+>
+{order.startTime || "-"}
+</TableCell>
 
+
+<TableCell
+ sx={{
+  fontWeight:700,
+  color:"#f472b6",
+ }}
+>
+{order.endTime || "-"}
+</TableCell>
                 <TableCell
                   sx={{
                     fontWeight: 700,
@@ -1544,32 +1785,78 @@ transform:
     px: 3,
     borderRadius: "14px",
     fontWeight: 900,
-    color: "#000",
-    background: "linear-gradient(135deg,#fde047,#facc15,#f59e0b)",
+
+    color:
+      (!printAll && selectedOrders.size === 0)
+        ? "#9ca3af"
+        : "#000",
+
+    background:
+      (!printAll && selectedOrders.size === 0)
+        ? "#d4d4d4"
+        : "linear-gradient(135deg,#fde047,#facc15,#f59e0b)",
+
+    opacity: 1,
+
+    "&.Mui-disabled": {
+      color:"#9ca3af",
+      background:"#d4d4d4",
+      opacity:1,
+    },
+
+    "&:hover": {
+      background:
+        (!printAll && selectedOrders.size === 0)
+          ? "#d4d4d4"
+          : "linear-gradient(135deg,#fde047,#facc15,#f59e0b)",
+    },
   }}
 >
   🖨️ {t("print")}
 </Button>
+
+
 <Button
   variant="contained"
   disabled={!printAll && selectedOrders.size === 0}
-  onClick={() => {
-    exportExcel(printAll);
-    setPrintDialog(false);
-  }}
+onClick={async () => {
+  await exportExcel(printAll);
+  setPrintDialog(false);
+}}
   sx={{
     height: 45,
     px: 3,
     borderRadius: "14px",
     fontWeight: 900,
-    color: "#fff",
-    background: "#16a34a",
-    "&:hover": { background: "#15803d" },
+
+    color:
+      (!printAll && selectedOrders.size === 0)
+        ? "#6b7280"
+        : "#fff",
+
+    background:
+      (!printAll && selectedOrders.size === 0)
+        ? "#86efac"
+        : "#16a34a",
+
+    opacity: 1,
+
+    "&.Mui-disabled": {
+      color:"#6b7280",
+      background:"#86efac",
+      opacity:1,
+    },
+
+    "&:hover": {
+      background:
+        (!printAll && selectedOrders.size === 0)
+          ? "#86efac"
+          : "#15803d",
+    },
   }}
 >
   📊 Excel
 </Button>
-
 
 
 </DialogActions>

@@ -93,9 +93,7 @@ function App() {
   path="/restaurants/:id"
   element={
     <ProtectedRoute>
-      <MainLayout>
-        <RestaurantDetails />
-      </MainLayout>
+      <RestaurantDetails />
     </ProtectedRoute>
   }
 />

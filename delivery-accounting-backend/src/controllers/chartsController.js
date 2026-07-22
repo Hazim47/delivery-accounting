@@ -80,7 +80,6 @@ createdAt:getCurrentWeekFilter()
 
 
   
-
     res.json(data);
 
   } catch(error) {

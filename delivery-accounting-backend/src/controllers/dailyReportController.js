@@ -73,24 +73,67 @@ message:"Server Error"
 
 };
 
-const getDailyReports = async (req, res) => {
-  try {
+const getDailyReports = async (req,res)=>{
 
-    const reports = await DailyReport.findAll({
-      order: [
-        ["date", "DESC"]
-      ]
-    });
+try{
 
-    res.json(reports);
+const page = Number(req.query.page) || 1;
+const limit = Number(req.query.limit) || 50;
 
-  } catch(error){
+const search = req.query.search || "";
 
-    res.status(500).json({
-      message:error.message
-    });
 
-  }
+const offset = (page - 1) * limit;
+
+
+const where = {};
+
+
+if(search){
+
+where.importDate = {
+  [Op.like]: `%${search}%`
+};
+
+}
+
+
+const {count,rows} = await DailyReport.findAndCountAll({
+
+where,
+
+limit,
+
+offset,
+
+order:[
+ ["date","DESC"]
+]
+
+});
+
+
+res.json({
+
+data:rows,
+
+pages:Math.ceil(count / limit),
+
+total:count
+
+});
+
+
+}catch(error){
+
+console.log(error);
+
+res.status(500).json({
+message:error.message
+});
+
+}
+
 };
 module.exports={
 getDailyReportsSummary,

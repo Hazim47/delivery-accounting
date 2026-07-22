@@ -170,7 +170,7 @@ deliveredOrdersValue: "Delivered Orders Value",
 companyTariffTotal: "Company Tariff Total",
 
 totalAccountingCompensation: "Total Accounting Compensation",
-
+back:"Back",
 customer: "Customer",
 printSettings:"Print Settings",
 selectColumns:"Select Columns",
@@ -330,7 +330,7 @@ customerName: "اسم الزبون",
 customerPhone: "هاتف الزبون",
 customerAddress: "عنوان الزبون",
 customerArea: "منطقة الزبون",
-
+back:"رجوع",
 orderAmount: "قيمة الطلب",
 deliveryFee: "سعر التوصيل",
 vehicleType: "المركبة",

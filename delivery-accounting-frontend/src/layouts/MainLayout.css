@@ -5,12 +5,13 @@
   background:
     radial-gradient(circle at top left, #0a0a0a 0%, #050505 50%, #000000 100%);
 
-  overflow-x: hidden;
+  overflow-x: auto;   /* بدل hidden */
 }
 
 /* MAIN WRAPPER */
 .main-content {
   flex: 1;
+  min-width: 0;
 
   display: flex;
   flex-direction: column;
@@ -25,6 +26,8 @@
   flex: 1;
 
   padding: 30px;
+
+  overflow-x: auto;
 
   animation: fadeIn 0.45s ease;
 }

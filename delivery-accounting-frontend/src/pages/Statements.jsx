@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import API from "../api/axios";
 import { useTranslation } from "react-i18next";
+import { Pagination, PaginationItem } from "@mui/material";
 import {
   Box,
   Paper,
@@ -12,7 +13,6 @@ import {
   TableCell,
   TableBody,
   Button,
-  Pagination,
   TextField,
   InputAdornment,
   CircularProgress,
@@ -102,15 +102,18 @@ const deleteStatement = async (id) => {
   }
 };
 return (
-  <Box
-    sx={{
-      p: 3,
-      minHeight: "100vh",
-      background:
-        "radial-gradient(circle at top left,#0a0a0a 0%,#050505 50%,#000 100%)",
-      color: "#fff",
-    }}
-  >
+<Box
+  sx={{
+    p: 3,
+    minHeight: "100vh",
+    width: "100%",
+    overflowX: "auto",
+    overflowY: "auto",
+    background:
+      "radial-gradient(circle at top left,#0a0a0a 0%,#050505 50%,#000 100%)",
+    color: "#fff",
+  }}
+>
 
     {/* HEADER */}
     <Typography
@@ -211,7 +214,7 @@ return (
     </Box>
   ) : (
     <Table  sx={{
-      minWidth: 1000,
+      minWidth:800,
     }}>
       <TableHead>
         <TableRow sx={{ background: "linear-gradient(90deg,#0a0a0a,#111)" }}>
@@ -458,10 +461,32 @@ sx={{
       }}
     >
       <Pagination
-        page={page}
-        count={pages}
-        onChange={(e, value) => setPage(value)}
-      />
+  page={page}
+  count={pages}
+  siblingCount={0}
+  boundaryCount={0}
+  renderItem={(item) => {
+    if (
+      item.type === "page" &&
+      item.page !== page
+    ) {
+      return null;
+    }
+
+    return <PaginationItem {...item} />;
+  }}
+  onChange={(e, value) => setPage(value)}
+  sx={{
+    "& .MuiPaginationItem-root": {
+      color: "#fff",
+    },
+    "& .Mui-selected": {
+      background: "#facc15 !important",
+      color: "#000",
+      fontWeight: 900,
+    },
+  }}
+/>
     </Box>
   </Box>
 );

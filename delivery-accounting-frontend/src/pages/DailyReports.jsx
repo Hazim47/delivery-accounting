@@ -1,5 +1,6 @@
 import {useEffect,useState} from "react";
 import API from "../api/axios";
+import { Pagination, PaginationItem } from "@mui/material";
 import {
 Box,
 Paper,
@@ -13,7 +14,6 @@ Button,
 CircularProgress,
 TextField,
 InputAdornment,
-Pagination
 } from "@mui/material";
 import AssessmentIcon from "@mui/icons-material/Assessment";
 import SearchIcon from "@mui/icons-material/Search";
@@ -28,6 +28,7 @@ import SavingsIcon from "@mui/icons-material/Savings";
 const DailyReports=()=>{
 const { t, i18n } = useTranslation();
 const [reports,setReports]=useState([]);
+const [pages,setPages]=useState(1);
 const [loading,setLoading]=useState(true);
 const [search,setSearch]=useState("");
 const [summary,setSummary]=useState(null);
@@ -38,10 +39,22 @@ const fetchReports=async()=>{
 
 try{
 
-const reports =
-await API.get("/daily-reports");
+const reports = await API.get("/daily-reports",{
+params:{
+page,
+limit:50,
+search
+}
+});
 
-setReports(reports.data||[]);
+
+setReports(
+ reports.data.data || []
+);
+
+setPages(
+ reports.data.pages || 1
+);
 
 
 const summary =
@@ -65,7 +78,7 @@ setLoading(false);
 
 useEffect(()=>{
 fetchReports();
-},[]);
+},[page,search]);
 useEffect(()=>{
 
  const timer=setTimeout(()=>{
@@ -80,29 +93,11 @@ useEffect(()=>{
 
 },[searchInput]);
 
-const filteredReports = reports.filter((report) => {
-  if (!report.importDate) return false;
 
-  const date = new Date(report.importDate);
-
-  const formattedDate = `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
-
-  return formattedDate.includes(search.trim());
-});
 const formatDate = (value) => {
   const date = new Date(value);
   return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`;
 };
-
-const limit = 50;
-
-const dailyReports = filteredReports.slice(
-(page - 1) * limit,
-page * limit
-);
-
-const pages = Math.ceil(filteredReports.length / limit);
-
 
 if(loading){
 return(
@@ -258,7 +253,7 @@ whiteSpace:"nowrap"
 </TableHead>
 
 
-<TableBody>{dailyReports.map((report)=>(
+<TableBody>{reports.map((report)=>(
 <TableRow
 key={report.id}
 sx={{
@@ -335,9 +330,31 @@ fontWeight:900
 }}
 >
 <Pagination
-page={page}
-count={pages || 1}
-onChange={(e,value)=>setPage(value)}
+  page={page}
+  count={pages}
+  siblingCount={0}
+  boundaryCount={0}
+  renderItem={(item) => {
+    if (
+      item.type === "page" &&
+      item.page !== page
+    ) {
+      return null;
+    }
+
+    return <PaginationItem {...item} />;
+  }}
+  onChange={(e, value) => setPage(value)}
+  sx={{
+    "& .MuiPaginationItem-root": {
+      color: "#fff",
+    },
+    "& .Mui-selected": {
+      background: "#facc15 !important",
+      color: "#000",
+      fontWeight: 900,
+    },
+  }}
 />
 </Box>
 </Box>
